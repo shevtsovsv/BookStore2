@@ -135,7 +135,7 @@ graph TD
   <!-- Согласие с условиями -->
   <div class="form-group checkbox-group">
     <label class="checkbox-label">
-      <input type="checkbox" id="agreeTerms" required>
+      <input type="checkbox" id="agreeTerms" required />
       <span class="checkmark"></span>
       Я согласен с <a href="#" target="_blank">условиями использования</a>
     </label>
@@ -169,18 +169,18 @@ class RegistrationValidator {
   }
 
   initializeForm() {
-    this.form = document.getElementById('registerForm');
-    this.submitBtn = document.getElementById('registerBtn');
-    
+    this.form = document.getElementById("registerForm");
+    this.submitBtn = document.getElementById("registerBtn");
+
     // Элементы формы
     this.inputs = {
-      firstName: document.getElementById('firstName'),
-      lastName: document.getElementById('lastName'),
-      email: document.getElementById('email'),
-      username: document.getElementById('username'),
-      password: document.getElementById('password'),
-      confirmPassword: document.getElementById('confirmPassword'),
-      agreeTerms: document.getElementById('agreeTerms')
+      firstName: document.getElementById("firstName"),
+      lastName: document.getElementById("lastName"),
+      email: document.getElementById("email"),
+      username: document.getElementById("username"),
+      password: document.getElementById("password"),
+      confirmPassword: document.getElementById("confirmPassword"),
+      agreeTerms: document.getElementById("agreeTerms"),
     };
 
     // Состояние валидации
@@ -191,49 +191,49 @@ class RegistrationValidator {
       username: true, // опциональное поле
       password: false,
       confirmPassword: false,
-      agreeTerms: false
+      agreeTerms: false,
     };
   }
 
   setupRealTimeValidation() {
     // Валидация имени и фамилии
-    this.inputs.firstName.addEventListener('input', () => {
-      this.validateName('firstName');
+    this.inputs.firstName.addEventListener("input", () => {
+      this.validateName("firstName");
     });
 
-    this.inputs.lastName.addEventListener('input', () => {
-      this.validateName('lastName');
+    this.inputs.lastName.addEventListener("input", () => {
+      this.validateName("lastName");
     });
 
     // Валидация email с автоматическим созданием username
-    this.inputs.email.addEventListener('input', () => {
+    this.inputs.email.addEventListener("input", () => {
       this.validateEmail();
       this.generateUsernameFromEmail();
     });
 
     // Валидация username
-    this.inputs.username.addEventListener('input', () => {
+    this.inputs.username.addEventListener("input", () => {
       this.validateUsername();
     });
 
     // Валидация пароля в реальном времени
-    this.inputs.password.addEventListener('input', () => {
+    this.inputs.password.addEventListener("input", () => {
       this.validatePassword();
       this.validatePasswordMatch(); // Перепроверяем совпадение
     });
 
     // Валидация совпадения паролей
-    this.inputs.confirmPassword.addEventListener('input', () => {
+    this.inputs.confirmPassword.addEventListener("input", () => {
       this.validatePasswordMatch();
     });
 
     // Валидация согласия с условиями
-    this.inputs.agreeTerms.addEventListener('change', () => {
+    this.inputs.agreeTerms.addEventListener("change", () => {
       this.validateTermsAgreement();
     });
 
     // Обработка отправки формы
-    this.form.addEventListener('submit', (e) => {
+    this.form.addEventListener("submit", (e) => {
       this.handleSubmit(e);
     });
   }
@@ -242,19 +242,19 @@ class RegistrationValidator {
   validateName(fieldName) {
     const input = this.inputs[fieldName];
     const value = input.value.trim();
-    
+
     const rules = {
       minLength: 2,
       maxLength: 50,
-      pattern: /^[а-яёa-z\s-]+$/iu // Русские, английские буквы, пробелы, дефисы
+      pattern: /^[а-яёa-z\s-]+$/iu, // Русские, английские буквы, пробелы, дефисы
     };
 
     let isValid = true;
-    let message = '';
+    let message = "";
 
     if (!value) {
       isValid = false;
-      message = 'Это поле обязательно';
+      message = "Это поле обязательно";
     } else if (value.length < rules.minLength) {
       isValid = false;
       message = `Минимум ${rules.minLength} символа`;
@@ -263,7 +263,7 @@ class RegistrationValidator {
       message = `Максимум ${rules.maxLength} символов`;
     } else if (!rules.pattern.test(value)) {
       isValid = false;
-      message = 'Только буквы, пробелы и дефисы';
+      message = "Только буквы, пробелы и дефисы";
     }
 
     this.setFieldValidation(fieldName, isValid, message);
@@ -274,22 +274,22 @@ class RegistrationValidator {
   validateEmail() {
     const email = this.inputs.email.value.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
+
     let isValid = true;
-    let message = '';
+    let message = "";
 
     if (!email) {
       isValid = false;
-      message = 'Email обязателен';
+      message = "Email обязателен";
     } else if (!emailRegex.test(email)) {
       isValid = false;
-      message = 'Некорректный формат email';
+      message = "Некорректный формат email";
     } else if (email.length > 100) {
       isValid = false;
-      message = 'Email слишком длинный';
+      message = "Email слишком длинный";
     }
 
-    this.setFieldValidation('email', isValid, message);
+    this.setFieldValidation("email", isValid, message);
     return isValid;
   }
 
@@ -300,9 +300,9 @@ class RegistrationValidator {
 
     // Создаем username только если поле пустое
     if (email && !username) {
-      const emailPart = email.split('@')[0];
+      const emailPart = email.split("@")[0];
       const cleanUsername = emailPart
-        .replace(/[^a-zA-Z0-9]/g, '') // Удаляем специальные символы
+        .replace(/[^a-zA-Z0-9]/g, "") // Удаляем специальные символы
         .toLowerCase()
         .substring(0, 30); // Ограничиваем длину
 
@@ -314,21 +314,21 @@ class RegistrationValidator {
   // Валидация username
   validateUsername() {
     const username = this.inputs.username.value.trim();
-    
+
     // Username опциональный, если пустой - будет создан из email
     if (!username) {
-      this.setFieldValidation('username', true, '');
+      this.setFieldValidation("username", true, "");
       return true;
     }
 
     const rules = {
       minLength: 3,
       maxLength: 30,
-      pattern: /^[a-zA-Z0-9_]+$/ // Только латинские буквы, цифры, подчеркивание
+      pattern: /^[a-zA-Z0-9_]+$/, // Только латинские буквы, цифры, подчеркивание
     };
 
     let isValid = true;
-    let message = '';
+    let message = "";
 
     if (username.length < rules.minLength) {
       isValid = false;
@@ -338,48 +338,50 @@ class RegistrationValidator {
       message = `Максимум ${rules.maxLength} символов`;
     } else if (!rules.pattern.test(username)) {
       isValid = false;
-      message = 'Только латинские буквы, цифры и подчеркивание';
+      message = "Только латинские буквы, цифры и подчеркивание";
     }
 
-    this.setFieldValidation('username', isValid, message);
+    this.setFieldValidation("username", isValid, message);
     return isValid;
   }
 
   // Валидация пароля с визуальными индикаторами
   validatePassword() {
     const password = this.inputs.password.value;
-    
+
     const requirements = {
       length: password.length >= 6,
       upper: /[A-Z]/.test(password),
       lower: /[a-z]/.test(password),
-      number: /\d/.test(password)
+      number: /\d/.test(password),
     };
 
     // Обновляем визуальные индикаторы
     this.updatePasswordRequirements(requirements);
 
-    const allRequirementsMet = Object.values(requirements).every(req => req);
-    const message = allRequirementsMet ? '' : 'Пароль не соответствует требованиям';
+    const allRequirementsMet = Object.values(requirements).every((req) => req);
+    const message = allRequirementsMet
+      ? ""
+      : "Пароль не соответствует требованиям";
 
-    this.setFieldValidation('password', allRequirementsMet, message);
+    this.setFieldValidation("password", allRequirementsMet, message);
     return allRequirementsMet;
   }
 
   // Обновление визуальных индикаторов требований к паролю
   updatePasswordRequirements(requirements) {
     const indicators = {
-      'req-length': requirements.length,
-      'req-upper': requirements.upper,
-      'req-lower': requirements.lower,
-      'req-number': requirements.number
+      "req-length": requirements.length,
+      "req-upper": requirements.upper,
+      "req-lower": requirements.lower,
+      "req-number": requirements.number,
     };
 
     Object.entries(indicators).forEach(([id, isValid]) => {
       const element = document.getElementById(id);
       if (element) {
-        element.style.color = isValid ? '#27ae60' : '#e74c3c';
-        element.style.fontWeight = isValid ? 'bold' : 'normal';
+        element.style.color = isValid ? "#27ae60" : "#e74c3c";
+        element.style.fontWeight = isValid ? "bold" : "normal";
       }
     });
   }
@@ -390,23 +392,23 @@ class RegistrationValidator {
     const confirmPassword = this.inputs.confirmPassword.value;
 
     if (!confirmPassword) {
-      this.setFieldValidation('confirmPassword', false, '');
+      this.setFieldValidation("confirmPassword", false, "");
       return false;
     }
 
     const isValid = password === confirmPassword;
-    const message = isValid ? '' : 'Пароли не совпадают';
+    const message = isValid ? "" : "Пароли не совпадают";
 
-    this.setFieldValidation('confirmPassword', isValid, message);
+    this.setFieldValidation("confirmPassword", isValid, message);
     return isValid;
   }
 
   // Валидация согласия с условиями
   validateTermsAgreement() {
     const isChecked = this.inputs.agreeTerms.checked;
-    const message = isChecked ? '' : 'Необходимо согласие с условиями';
+    const message = isChecked ? "" : "Необходимо согласие с условиями";
 
-    this.setFieldValidation('agreeTerms', isChecked, message);
+    this.setFieldValidation("agreeTerms", isChecked, message);
     return isChecked;
   }
 
@@ -419,15 +421,15 @@ class RegistrationValidator {
     this.validationState[fieldName] = isValid;
 
     // Визуальное оформление поля
-    if (input.type !== 'checkbox') {
-      input.classList.toggle('error', !isValid && message);
-      input.classList.toggle('valid', isValid && input.value.trim());
+    if (input.type !== "checkbox") {
+      input.classList.toggle("error", !isValid && message);
+      input.classList.toggle("valid", isValid && input.value.trim());
     }
 
     // Показываем/скрываем сообщение об ошибке
     if (errorElement) {
       errorElement.textContent = message;
-      errorElement.style.display = message ? 'block' : 'none';
+      errorElement.style.display = message ? "block" : "none";
     }
 
     // Обновляем состояние кнопки отправки
@@ -436,29 +438,31 @@ class RegistrationValidator {
 
   // Обновление состояния кнопки отправки
   updateSubmitButton() {
-    const allValid = Object.values(this.validationState).every(state => state);
+    const allValid = Object.values(this.validationState).every(
+      (state) => state
+    );
     this.submitBtn.disabled = !allValid;
-    
+
     if (allValid) {
-      this.submitBtn.classList.add('enabled');
+      this.submitBtn.classList.add("enabled");
     } else {
-      this.submitBtn.classList.remove('enabled');
+      this.submitBtn.classList.remove("enabled");
     }
   }
 
   // Полная валидация формы перед отправкой
   validateAllFields() {
     const results = {
-      firstName: this.validateName('firstName'),
-      lastName: this.validateName('lastName'),
+      firstName: this.validateName("firstName"),
+      lastName: this.validateName("lastName"),
       email: this.validateEmail(),
       username: this.validateUsername(),
       password: this.validatePassword(),
       confirmPassword: this.validatePasswordMatch(),
-      agreeTerms: this.validateTermsAgreement()
+      agreeTerms: this.validateTermsAgreement(),
     };
 
-    return Object.values(results).every(result => result);
+    return Object.values(results).every((result) => result);
   }
 
   // Обработка отправки формы
@@ -467,7 +471,7 @@ class RegistrationValidator {
 
     // Полная валидация перед отправкой
     if (!this.validateAllFields()) {
-      Notifications.error('Пожалуйста, исправьте ошибки в форме');
+      Notifications.error("Пожалуйста, исправьте ошибки в форме");
       return;
     }
 
@@ -478,12 +482,12 @@ class RegistrationValidator {
       const formData = this.collectFormData();
 
       // Отправляем на сервер
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       const result = await response.json();
@@ -493,7 +497,6 @@ class RegistrationValidator {
       } else {
         this.handleRegistrationError(result, response.status);
       }
-
     } catch (error) {
       this.handleNetworkError(error);
     } finally {
@@ -507,15 +510,16 @@ class RegistrationValidator {
       firstName: this.inputs.firstName.value.trim(),
       lastName: this.inputs.lastName.value.trim(),
       email: this.inputs.email.value.trim(),
-      username: this.inputs.username.value.trim() || 
-                this.inputs.email.value.split('@')[0].replace(/[^a-zA-Z0-9]/g, ''),
-      password: this.inputs.password.value
+      username:
+        this.inputs.username.value.trim() ||
+        this.inputs.email.value.split("@")[0].replace(/[^a-zA-Z0-9]/g, ""),
+      password: this.inputs.password.value,
     };
   }
 
   // Обработка успешной регистрации
   async handleSuccessfulRegistration(result) {
-    Notifications.success('🎉 Регистрация прошла успешно!');
+    Notifications.success("🎉 Регистрация прошла успешно!");
 
     // Сохраняем токен и данные пользователя
     Auth.login(result.token, result.user);
@@ -528,7 +532,7 @@ class RegistrationValidator {
 
     // Перенаправляем на главную страницу
     setTimeout(() => {
-      window.location.href = '../index.html';
+      window.location.href = "../index.html";
     }, 2500);
   }
 
@@ -536,62 +540,68 @@ class RegistrationValidator {
   handleRegistrationError(result, status) {
     if (status === 409) {
       // Конфликт - пользователь уже существует
-      if (result.message.includes('email')) {
-        this.setFieldValidation('email', false, 'Пользователь с таким email уже существует');
-      } else if (result.message.includes('username')) {
-        this.setFieldValidation('username', false, 'Такой логин уже занят');
+      if (result.message.includes("email")) {
+        this.setFieldValidation(
+          "email",
+          false,
+          "Пользователь с таким email уже существует"
+        );
+      } else if (result.message.includes("username")) {
+        this.setFieldValidation("username", false, "Такой логин уже занят");
       } else {
         Notifications.error(result.message);
       }
     } else if (status === 400) {
       // Ошибки валидации
       if (result.errors && Array.isArray(result.errors)) {
-        result.errors.forEach(error => {
+        result.errors.forEach((error) => {
           Notifications.error(error);
         });
       } else {
-        Notifications.error(result.message || 'Ошибка валидации данных');
+        Notifications.error(result.message || "Ошибка валидации данных");
       }
     } else {
-      Notifications.error(result.message || 'Ошибка регистрации');
+      Notifications.error(result.message || "Ошибка регистрации");
     }
   }
 
   // Обработка сетевых ошибок
   handleNetworkError(error) {
-    console.error('Ошибка регистрации:', error);
-    
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      Notifications.error('Ошибка подключения к серверу. Проверьте интернет-соединение.');
+    console.error("Ошибка регистрации:", error);
+
+    if (error.name === "TypeError" && error.message.includes("fetch")) {
+      Notifications.error(
+        "Ошибка подключения к серверу. Проверьте интернет-соединение."
+      );
     } else {
-      Notifications.error('Произошла неожиданная ошибка. Попробуйте еще раз.');
+      Notifications.error("Произошла неожиданная ошибка. Попробуйте еще раз.");
     }
   }
 
   // Управление состоянием загрузки
   setLoading(isLoading) {
-    const btnText = this.submitBtn.querySelector('.btn-text');
-    const btnLoader = this.submitBtn.querySelector('.btn-loader');
+    const btnText = this.submitBtn.querySelector(".btn-text");
+    const btnLoader = this.submitBtn.querySelector(".btn-loader");
 
     if (isLoading) {
       this.submitBtn.disabled = true;
-      btnText.style.display = 'none';
-      btnLoader.style.display = 'inline-flex';
+      btnText.style.display = "none";
+      btnLoader.style.display = "inline-flex";
     } else {
       this.submitBtn.disabled = false;
-      btnText.style.display = 'inline';
-      btnLoader.style.display = 'none';
+      btnText.style.display = "inline";
+      btnLoader.style.display = "none";
     }
   }
 }
 
 // Инициализация при загрузке DOM
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
   // Проверяем, не авторизован ли уже пользователь
   if (Auth.isAuthenticated()) {
-    Notifications.info('Вы уже авторизованы');
+    Notifications.info("Вы уже авторизованы");
     setTimeout(() => {
-      window.location.href = '../index.html';
+      window.location.href = "../index.html";
     }, 1000);
     return;
   }
@@ -599,7 +609,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Инициализируем валидатор регистрации
   new RegistrationValidator();
 
-  console.log('🔐 Страница регистрации загружена');
+  console.log("🔐 Страница регистрации загружена");
 });
 ```
 
@@ -705,9 +715,15 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 @keyframes successPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.02); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Подсказки для полей */
@@ -726,7 +742,7 @@ document.addEventListener('DOMContentLoaded', function() {
   .password-requirements {
     font-size: 12px;
   }
-  
+
   .password-requirements li {
     font-size: 11px;
   }
@@ -742,59 +758,59 @@ document.addEventListener('DOMContentLoaded', function() {
 class RegistrationAnalytics {
   static trackFormStart() {
     const startTime = Date.now();
-    sessionStorage.setItem('registrationStartTime', startTime);
-    
+    sessionStorage.setItem("registrationStartTime", startTime);
+
     // Отправляем событие начала регистрации
-    this.sendEvent('registration_started', {
+    this.sendEvent("registration_started", {
       timestamp: startTime,
       userAgent: navigator.userAgent,
-      referrer: document.referrer
+      referrer: document.referrer,
     });
   }
 
   static trackFormSubmit() {
-    const startTime = sessionStorage.getItem('registrationStartTime');
+    const startTime = sessionStorage.getItem("registrationStartTime");
     const endTime = Date.now();
     const duration = startTime ? endTime - startTime : 0;
 
-    this.sendEvent('registration_attempted', {
+    this.sendEvent("registration_attempted", {
       duration: duration,
-      timestamp: endTime
+      timestamp: endTime,
     });
   }
 
   static trackValidationErrors(errors) {
-    this.sendEvent('registration_validation_errors', {
+    this.sendEvent("registration_validation_errors", {
       errors: errors,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
   static trackSuccess() {
-    const startTime = sessionStorage.getItem('registrationStartTime');
+    const startTime = sessionStorage.getItem("registrationStartTime");
     const endTime = Date.now();
     const duration = startTime ? endTime - startTime : 0;
 
-    this.sendEvent('registration_completed', {
+    this.sendEvent("registration_completed", {
       duration: duration,
-      timestamp: endTime
+      timestamp: endTime,
     });
 
-    sessionStorage.removeItem('registrationStartTime');
+    sessionStorage.removeItem("registrationStartTime");
   }
 
   static sendEvent(eventName, data) {
     // Отправляем данные на сервер аналитики
     if (window.gtag) {
-      gtag('event', eventName, data);
+      gtag("event", eventName, data);
     }
 
     // Или отправляем на собственный сервер
-    fetch('/api/analytics/event', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event: eventName, data })
-    }).catch(err => console.log('Analytics error:', err));
+    fetch("/api/analytics/event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event: eventName, data }),
+    }).catch((err) => console.log("Analytics error:", err));
   }
 }
 ```
@@ -811,12 +827,12 @@ const checkUniqueness = debounce(async (field, value) => {
   try {
     const response = await fetch(`/api/auth/check-unique?${field}=${value}`);
     const result = await response.json();
-    
+
     if (!result.isUnique) {
       setFieldValidation(field, false, `Такой ${field} уже занят`);
     }
   } catch (error) {
-    console.error('Ошибка проверки уникальности:', error);
+    console.error("Ошибка проверки уникальности:", error);
   }
 }, 500);
 ```

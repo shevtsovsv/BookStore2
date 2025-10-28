@@ -303,7 +303,7 @@ h1 {
 
 /* ---------- ФОРМА РЕГИСТРАЦИИ ---------- */
 .form-wrapper {
-  max-width: 400px;
+  max-width: 500px;
   margin: 50px auto;
   background: #fff;
   padding: 30px 40px;
@@ -358,7 +358,7 @@ h1 {
   background: #219150;
 }
 
-@media (max-width: 500px) {
+@media (max-width: 600px) {
   .form-wrapper {
     margin: 30px 15px;
     padding: 20px;

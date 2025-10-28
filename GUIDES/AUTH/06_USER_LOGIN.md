@@ -9,7 +9,7 @@
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant F as Frontend  
+    participant F as Frontend
     participant B as Backend
     participant DB as Database
     participant J as JWT
@@ -78,7 +78,7 @@ sequenceDiagram
   <!-- Запомнить меня -->
   <div class="form-group checkbox-group">
     <label class="checkbox-label">
-      <input type="checkbox" id="rememberMe" name="rememberMe">
+      <input type="checkbox" id="rememberMe" name="rememberMe" />
       <span class="checkmark"></span>
       Запомнить меня
     </label>
@@ -132,19 +132,19 @@ class LoginManager {
   }
 
   initializeForm() {
-    this.form = document.getElementById('loginForm');
-    this.submitBtn = document.getElementById('loginBtn');
-    
+    this.form = document.getElementById("loginForm");
+    this.submitBtn = document.getElementById("loginBtn");
+
     // Элементы формы
     this.inputs = {
-      login: document.getElementById('login'),
-      password: document.getElementById('password'),
-      rememberMe: document.getElementById('rememberMe')
+      login: document.getElementById("login"),
+      password: document.getElementById("password"),
+      rememberMe: document.getElementById("rememberMe"),
     };
 
     // Кнопки
-    this.passwordToggle = document.getElementById('passwordToggle');
-    
+    this.passwordToggle = document.getElementById("passwordToggle");
+
     // Состояние
     this.isLoading = false;
     this.loginAttempts = this.getLoginAttempts();
@@ -152,30 +152,36 @@ class LoginManager {
 
   setupEventListeners() {
     // Обработка отправки формы
-    this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+    this.form.addEventListener("submit", (e) => this.handleSubmit(e));
 
     // Очистка ошибок при вводе
-    this.inputs.login.addEventListener('input', () => this.clearFieldError('login'));
-    this.inputs.password.addEventListener('input', () => this.clearFieldError('password'));
+    this.inputs.login.addEventListener("input", () =>
+      this.clearFieldError("login")
+    );
+    this.inputs.password.addEventListener("input", () =>
+      this.clearFieldError("password")
+    );
 
     // Переключатель видимости пароля
     if (this.passwordToggle) {
-      this.passwordToggle.addEventListener('click', () => this.togglePasswordVisibility());
+      this.passwordToggle.addEventListener("click", () =>
+        this.togglePasswordVisibility()
+      );
     }
 
     // Автозаполнение из localStorage при загрузке
     this.loadSavedLogin();
 
     // Сохранение логина при изменении checkbox
-    this.inputs.rememberMe.addEventListener('change', () => {
+    this.inputs.rememberMe.addEventListener("change", () => {
       if (!this.inputs.rememberMe.checked) {
-        localStorage.removeItem('savedLogin');
+        localStorage.removeItem("savedLogin");
       }
     });
 
     // Enter в поле логина переходит к паролю
-    this.inputs.login.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && this.inputs.login.value.trim()) {
+    this.inputs.login.addEventListener("keypress", (e) => {
+      if (e.key === "Enter" && this.inputs.login.value.trim()) {
         e.preventDefault();
         this.inputs.password.focus();
       }
@@ -184,7 +190,7 @@ class LoginManager {
 
   initializeFeatures() {
     // Показываем подсказку, если есть сохраненный логин
-    if (localStorage.getItem('savedLogin')) {
+    if (localStorage.getItem("savedLogin")) {
       this.inputs.rememberMe.checked = true;
     }
 
@@ -201,19 +207,22 @@ class LoginManager {
 
     // Проверка логина
     if (!login) {
-      this.setFieldError('login', 'Введите логин или email');
+      this.setFieldError("login", "Введите логин или email");
       isValid = false;
     } else if (login.length < 3) {
-      this.setFieldError('login', 'Логин должен содержать минимум 3 символа');
+      this.setFieldError("login", "Логин должен содержать минимум 3 символа");
       isValid = false;
     }
 
     // Проверка пароля
     if (!password) {
-      this.setFieldError('password', 'Введите пароль');
+      this.setFieldError("password", "Введите пароль");
       isValid = false;
     } else if (password.length < 6) {
-      this.setFieldError('password', 'Пароль должен содержать минимум 6 символов');
+      this.setFieldError(
+        "password",
+        "Пароль должен содержать минимум 6 символов"
+      );
       isValid = false;
     }
 
@@ -225,10 +234,10 @@ class LoginManager {
     const input = this.inputs[fieldName];
     const errorElement = document.getElementById(`${fieldName}-error`);
 
-    input.classList.add('error');
+    input.classList.add("error");
     if (errorElement) {
       errorElement.textContent = message;
-      errorElement.style.display = 'block';
+      errorElement.style.display = "block";
     }
   }
 
@@ -237,17 +246,17 @@ class LoginManager {
     const input = this.inputs[fieldName];
     const errorElement = document.getElementById(`${fieldName}-error`);
 
-    input.classList.remove('error');
+    input.classList.remove("error");
     if (errorElement) {
-      errorElement.textContent = '';
-      errorElement.style.display = 'none';
+      errorElement.textContent = "";
+      errorElement.style.display = "none";
     }
   }
 
   // Очистка всех ошибок
   clearAllErrors() {
-    Object.keys(this.inputs).forEach(fieldName => {
-      if (fieldName !== 'rememberMe') {
+    Object.keys(this.inputs).forEach((fieldName) => {
+      if (fieldName !== "rememberMe") {
         this.clearFieldError(fieldName);
       }
     });
@@ -256,28 +265,28 @@ class LoginManager {
   // Переключение видимости пароля
   togglePasswordVisibility() {
     const passwordInput = this.inputs.password;
-    const toggleIcon = this.passwordToggle.querySelector('.toggle-icon');
+    const toggleIcon = this.passwordToggle.querySelector(".toggle-icon");
 
-    if (passwordInput.type === 'password') {
-      passwordInput.type = 'text';
-      toggleIcon.textContent = '🙈';
-      this.passwordToggle.setAttribute('aria-label', 'Скрыть пароль');
+    if (passwordInput.type === "password") {
+      passwordInput.type = "text";
+      toggleIcon.textContent = "🙈";
+      this.passwordToggle.setAttribute("aria-label", "Скрыть пароль");
     } else {
-      passwordInput.type = 'password';
-      toggleIcon.textContent = '👁️';
-      this.passwordToggle.setAttribute('aria-label', 'Показать пароль');
+      passwordInput.type = "password";
+      toggleIcon.textContent = "👁️";
+      this.passwordToggle.setAttribute("aria-label", "Показать пароль");
     }
   }
 
   // Сохранение/загрузка логина
   saveLogin(login) {
     if (this.inputs.rememberMe.checked) {
-      localStorage.setItem('savedLogin', login);
+      localStorage.setItem("savedLogin", login);
     }
   }
 
   loadSavedLogin() {
-    const savedLogin = localStorage.getItem('savedLogin');
+    const savedLogin = localStorage.getItem("savedLogin");
     if (savedLogin) {
       this.inputs.login.value = savedLogin;
       this.inputs.rememberMe.checked = true;
@@ -291,20 +300,20 @@ class LoginManager {
 
   // Rate limiting (защита от брут-форса)
   getLoginAttempts() {
-    const attempts = localStorage.getItem('loginAttempts');
+    const attempts = localStorage.getItem("loginAttempts");
     return attempts ? JSON.parse(attempts) : { count: 0, lastAttempt: 0 };
   }
 
   updateLoginAttempts(success = false) {
     if (success) {
       // Сброс счетчика при успешном входе
-      localStorage.removeItem('loginAttempts');
+      localStorage.removeItem("loginAttempts");
       this.loginAttempts = { count: 0, lastAttempt: 0 };
     } else {
       // Увеличение счетчика неудачных попыток
       this.loginAttempts.count++;
       this.loginAttempts.lastAttempt = Date.now();
-      localStorage.setItem('loginAttempts', JSON.stringify(this.loginAttempts));
+      localStorage.setItem("loginAttempts", JSON.stringify(this.loginAttempts));
     }
   }
 
@@ -314,32 +323,34 @@ class LoginManager {
 
     if (this.loginAttempts.count >= maxAttempts) {
       const timeSinceLastAttempt = Date.now() - this.loginAttempts.lastAttempt;
-      
+
       if (timeSinceLastAttempt < lockoutTime) {
-        const remainingTime = Math.ceil((lockoutTime - timeSinceLastAttempt) / 60000);
+        const remainingTime = Math.ceil(
+          (lockoutTime - timeSinceLastAttempt) / 60000
+        );
         const message = `Слишком много неудачных попыток входа. Попробуйте через ${remainingTime} мин.`;
-        
+
         Notifications.error(message);
         this.submitBtn.disabled = true;
         this.submitBtn.textContent = `Заблокировано (${remainingTime} мин)`;
-        
+
         // Таймер для разблокировки
         setTimeout(() => {
           this.loginAttempts = { count: 0, lastAttempt: 0 };
-          localStorage.removeItem('loginAttempts');
+          localStorage.removeItem("loginAttempts");
           this.submitBtn.disabled = false;
           this.submitBtn.innerHTML = '<span class="btn-text">Войти</span>';
-          Notifications.info('Блокировка снята. Можете попробовать снова.');
+          Notifications.info("Блокировка снята. Можете попробовать снова.");
         }, lockoutTime - timeSinceLastAttempt);
-        
+
         return false;
       } else {
         // Сброс если прошло достаточно времени
         this.loginAttempts = { count: 0, lastAttempt: 0 };
-        localStorage.removeItem('loginAttempts');
+        localStorage.removeItem("loginAttempts");
       }
     }
-    
+
     return true;
   }
 
@@ -367,16 +378,16 @@ class LoginManager {
       // Подготовка данных
       const loginData = {
         login: this.inputs.login.value.trim(),
-        password: this.inputs.password.value
+        password: this.inputs.password.value,
       };
 
       // Отправка запроса
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(loginData)
+        body: JSON.stringify(loginData),
       });
 
       const result = await response.json();
@@ -386,7 +397,6 @@ class LoginManager {
       } else {
         this.handleLoginError(result, response.status);
       }
-
     } catch (error) {
       this.handleNetworkError(error);
     } finally {
@@ -404,9 +414,9 @@ class LoginManager {
 
     // Сохранение токена и пользовательских данных
     const loginSuccess = Auth.login(result.token, result.user);
-    
+
     if (!loginSuccess) {
-      throw new Error('Не удалось сохранить данные пользователя');
+      throw new Error("Не удалось сохранить данные пользователя");
     }
 
     // Уведомление о успешном входе
@@ -429,28 +439,29 @@ class LoginManager {
 
     if (status === 401) {
       // Неверные учетные данные
-      Notifications.error('Неверный логин или пароль');
-      
+      Notifications.error("Неверный логин или пароль");
+
       // Очистка поля пароля и фокус на нём
-      this.inputs.password.value = '';
+      this.inputs.password.value = "";
       this.inputs.password.focus();
-      
+
       // Подсказка о восстановлении пароля
       setTimeout(() => {
-        Notifications.info('Забыли пароль? Воспользуйтесь ссылкой восстановления');
+        Notifications.info(
+          "Забыли пароль? Воспользуйтесь ссылкой восстановления"
+        );
       }, 3000);
-      
     } else if (status === 429) {
       // Слишком много запросов
-      Notifications.error('Слишком много попыток входа. Попробуйте позже');
-      
+      Notifications.error("Слишком много попыток входа. Попробуйте позже");
     } else if (status === 400) {
       // Ошибки валидации
-      Notifications.error(result.message || 'Проверьте правильность введенных данных');
-      
+      Notifications.error(
+        result.message || "Проверьте правильность введенных данных"
+      );
     } else {
       // Другие ошибки
-      Notifications.error(result.message || 'Ошибка входа в систему');
+      Notifications.error(result.message || "Ошибка входа в систему");
     }
 
     // Показываем количество оставшихся попыток
@@ -462,62 +473,61 @@ class LoginManager {
 
   // Обработка сетевых ошибок
   handleNetworkError(error) {
-    console.error('Ошибка входа:', error);
-    
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      Notifications.error('Ошибка подключения к серверу');
+    console.error("Ошибка входа:", error);
+
+    if (error.name === "TypeError" && error.message.includes("fetch")) {
+      Notifications.error("Ошибка подключения к серверу");
     } else {
-      Notifications.error('Произошла неожиданная ошибка');
+      Notifications.error("Произошла неожиданная ошибка");
     }
   }
 
   // Получение URL для перенаправления
   getRedirectUrl() {
     // Проверяем сохраненный URL перенаправления
-    const savedRedirect = sessionStorage.getItem('redirectAfterLogin');
+    const savedRedirect = sessionStorage.getItem("redirectAfterLogin");
     if (savedRedirect) {
-      sessionStorage.removeItem('redirectAfterLogin');
+      sessionStorage.removeItem("redirectAfterLogin");
       return savedRedirect;
     }
 
     // Проверяем параметр redirect в URL
     const urlParams = new URLSearchParams(window.location.search);
-    const redirectParam = urlParams.get('redirect');
+    const redirectParam = urlParams.get("redirect");
     if (redirectParam) {
       // Проверяем что URL безопасный (только относительные ссылки)
-      if (redirectParam.startsWith('/') || redirectParam.startsWith('../')) {
+      if (redirectParam.startsWith("/") || redirectParam.startsWith("../")) {
         return redirectParam;
       }
     }
 
     // По умолчанию на главную страницу
-    return '../index.html';
+    return "../index.html";
   }
 
   // Управление состоянием загрузки
   setLoading(isLoading) {
     this.isLoading = isLoading;
-    
-    const btnText = this.submitBtn.querySelector('.btn-text');
-    const btnLoader = this.submitBtn.querySelector('.btn-loader');
+
+    const btnText = this.submitBtn.querySelector(".btn-text");
+    const btnLoader = this.submitBtn.querySelector(".btn-loader");
 
     if (isLoading) {
       this.submitBtn.disabled = true;
-      btnText.style.display = 'none';
-      btnLoader.style.display = 'inline-flex';
-      
+      btnText.style.display = "none";
+      btnLoader.style.display = "inline-flex";
+
       // Отключаем поля формы
-      Object.values(this.inputs).forEach(input => {
+      Object.values(this.inputs).forEach((input) => {
         input.disabled = true;
       });
-      
     } else {
       this.submitBtn.disabled = false;
-      btnText.style.display = 'inline';
-      btnLoader.style.display = 'none';
-      
+      btnText.style.display = "inline";
+      btnLoader.style.display = "none";
+
       // Включаем поля формы
-      Object.values(this.inputs).forEach(input => {
+      Object.values(this.inputs).forEach((input) => {
         input.disabled = false;
       });
     }
@@ -529,7 +539,7 @@ class LoginUtils {
   // Проверка браузера на поддержку localStorage
   static isLocalStorageAvailable() {
     try {
-      const test = '__localStorage_test__';
+      const test = "__localStorage_test__";
       localStorage.setItem(test, test);
       localStorage.removeItem(test);
       return true;
@@ -540,19 +550,19 @@ class LoginUtils {
 
   // Генерация device fingerprint для дополнительной безопасности
   static generateDeviceFingerprint() {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.textBaseline = 'top';
-    ctx.font = '14px Arial';
-    ctx.fillText('Device fingerprint', 2, 2);
-    
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    ctx.textBaseline = "top";
+    ctx.font = "14px Arial";
+    ctx.fillText("Device fingerprint", 2, 2);
+
     const fingerprint = {
       screen: `${screen.width}x${screen.height}`,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       language: navigator.language,
       platform: navigator.platform,
       canvas: canvas.toDataURL(),
-      userAgent: navigator.userAgent.substring(0, 100) // Ограничиваем длину
+      userAgent: navigator.userAgent.substring(0, 100), // Ограничиваем длину
     };
 
     return btoa(JSON.stringify(fingerprint)).substring(0, 32);
@@ -565,32 +575,36 @@ class LoginUtils {
       success: success,
       userAgent: navigator.userAgent,
       fingerprint: this.generateDeviceFingerprint(),
-      ...details
+      ...details,
     };
 
     // Отправляем на сервер (если настроено)
-    fetch('/api/auth/log-attempt', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(logData)
-    }).catch(err => console.log('Logging error:', err));
+    fetch("/api/auth/log-attempt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(logData),
+    }).catch((err) => console.log("Logging error:", err));
   }
 }
 
 // Инициализация при загрузке DOM
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
   // Проверяем localStorage
   if (!LoginUtils.isLocalStorageAvailable()) {
-    Notifications.warning('Ваш браузер не поддерживает сохранение данных. Функция "Запомнить меня" недоступна.');
+    Notifications.warning(
+      'Ваш браузер не поддерживает сохранение данных. Функция "Запомнить меня" недоступна.'
+    );
   }
 
   // Проверяем, не авторизован ли уже пользователь
   if (Auth.isAuthenticated()) {
     const user = Auth.getCurrentUser();
     if (user) {
-      Notifications.info(`Вы уже авторизованы как ${user.firstName || user.username}`);
+      Notifications.info(
+        `Вы уже авторизованы как ${user.firstName || user.username}`
+      );
       setTimeout(() => {
-        window.location.href = '../index.html';
+        window.location.href = "../index.html";
       }, 1000);
       return;
     }
@@ -601,11 +615,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Показываем подсказку если пришли со страницы требующей авторизации
   const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('required') === 'true') {
-    Notifications.info('Для доступа к этой странице требуется авторизация');
+  if (urlParams.get("required") === "true") {
+    Notifications.info("Для доступа к этой странице требуется авторизация");
   }
 
-  console.log('🔐 Страница входа загружена');
+  console.log("🔐 Страница входа загружена");
 });
 ```
 
@@ -673,7 +687,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .form-divider::before,
 .form-divider::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
   background: #ddd;
@@ -747,19 +761,28 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .form-btn.locked::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
   animation: shimmer 2s infinite;
 }
 
 @keyframes shimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 /* Мобильная адаптация */
@@ -769,11 +792,11 @@ document.addEventListener('DOMContentLoaded', function() {
     align-items: flex-start;
     gap: 10px;
   }
-  
+
   .social-login {
     gap: 8px;
   }
-  
+
   .social-btn {
     padding: 10px 16px;
     font-size: 13px;
@@ -794,11 +817,11 @@ class LoginSecurity {
       multipleTabsOpen: this.countOpenTabs() > 3,
       rapidRequests: this.checkRequestFrequency(),
       suspiciousUserAgent: this.checkUserAgent(),
-      vpnDetected: false // Можно добавить проверку VPN
+      vpnDetected: false, // Можно добавить проверку VPN
     };
 
-    if (Object.values(indicators).some(indicator => indicator)) {
-      console.warn('Подозрительная активность обнаружена', indicators);
+    if (Object.values(indicators).some((indicator) => indicator)) {
+      console.warn("Подозрительная активность обнаружена", indicators);
       return true;
     }
     return false;
@@ -808,14 +831,14 @@ class LoginSecurity {
   static countOpenTabs() {
     try {
       const tabId = Date.now();
-      localStorage.setItem('lastTabId', tabId);
-      
+      localStorage.setItem("lastTabId", tabId);
+
       // Упрощенная проверка количества вкладок
-      const tabs = JSON.parse(localStorage.getItem('openTabs') || '[]');
-      const activeTabs = tabs.filter(tab => Date.now() - tab < 5000);
+      const tabs = JSON.parse(localStorage.getItem("openTabs") || "[]");
+      const activeTabs = tabs.filter((tab) => Date.now() - tab < 5000);
       activeTabs.push(tabId);
-      
-      localStorage.setItem('openTabs', JSON.stringify(activeTabs));
+
+      localStorage.setItem("openTabs", JSON.stringify(activeTabs));
       return activeTabs.length;
     } catch {
       return 1;
@@ -824,9 +847,9 @@ class LoginSecurity {
 
   // Проверка частоты запросов
   static checkRequestFrequency() {
-    const requests = JSON.parse(localStorage.getItem('loginRequests') || '[]');
-    const recentRequests = requests.filter(time => Date.now() - time < 60000);
-    
+    const requests = JSON.parse(localStorage.getItem("loginRequests") || "[]");
+    const recentRequests = requests.filter((time) => Date.now() - time < 60000);
+
     return recentRequests.length > 5; // Более 5 запросов в минуту
   }
 
@@ -838,20 +861,20 @@ class LoginSecurity {
       /phantom/i,
       /selenium/i,
       /webdriver/i,
-      /bot/i
+      /bot/i,
     ];
-    
-    return suspiciousPatterns.some(pattern => pattern.test(ua));
+
+    return suspiciousPatterns.some((pattern) => pattern.test(ua));
   }
 
   // Логирование запроса входа
   static logRequest() {
-    const requests = JSON.parse(localStorage.getItem('loginRequests') || '[]');
+    const requests = JSON.parse(localStorage.getItem("loginRequests") || "[]");
     requests.push(Date.now());
-    
+
     // Оставляем только последние 10 запросов
     const recentRequests = requests.slice(-10);
-    localStorage.setItem('loginRequests', JSON.stringify(recentRequests));
+    localStorage.setItem("loginRequests", JSON.stringify(recentRequests));
   }
 }
 ```
@@ -864,57 +887,59 @@ class LoginSecurity {
 class LoginAnalytics {
   static trackLoginStart() {
     const startTime = Date.now();
-    sessionStorage.setItem('loginStartTime', startTime);
-    
-    this.sendEvent('login_started', {
+    sessionStorage.setItem("loginStartTime", startTime);
+
+    this.sendEvent("login_started", {
       timestamp: startTime,
       page: window.location.pathname,
-      referrer: document.referrer
+      referrer: document.referrer,
     });
   }
 
   static trackLoginAttempt(success, details = {}) {
-    const startTime = sessionStorage.getItem('loginStartTime');
+    const startTime = sessionStorage.getItem("loginStartTime");
     const duration = startTime ? Date.now() - startTime : 0;
 
-    this.sendEvent('login_attempted', {
+    this.sendEvent("login_attempted", {
       success: success,
       duration: duration,
       attempts: this.getAttemptCount(),
-      ...details
+      ...details,
     });
   }
 
   static trackLoginSuccess(user) {
-    const startTime = sessionStorage.getItem('loginStartTime');
+    const startTime = sessionStorage.getItem("loginStartTime");
     const duration = startTime ? Date.now() - startTime : 0;
 
-    this.sendEvent('login_completed', {
+    this.sendEvent("login_completed", {
       userId: user.userId,
       duration: duration,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
-    sessionStorage.removeItem('loginStartTime');
+    sessionStorage.removeItem("loginStartTime");
   }
 
   static getAttemptCount() {
-    const attempts = JSON.parse(localStorage.getItem('loginAttempts') || '{"count": 0}');
+    const attempts = JSON.parse(
+      localStorage.getItem("loginAttempts") || '{"count": 0}'
+    );
     return attempts.count;
   }
 
   static sendEvent(eventName, data) {
     // Отправка в Google Analytics
     if (window.gtag) {
-      gtag('event', eventName, data);
+      gtag("event", eventName, data);
     }
 
     // Отправка на собственный сервер
-    fetch('/api/analytics/login-event', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event: eventName, data })
-    }).catch(err => console.log('Analytics error:', err));
+    fetch("/api/analytics/login-event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event: eventName, data }),
+    }).catch((err) => console.log("Analytics error:", err));
   }
 }
 ```

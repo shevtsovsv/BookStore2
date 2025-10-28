@@ -11,25 +11,25 @@ graph TB
     U[👤 Пользователь] --> L[🔐 Login]
     L --> SC[🎫 Session Create]
     SC --> ST[💾 Session Store]
-    
+
     ST --> DB[(🗄️ Database)]
     ST --> RD[(📈 Redis Cache)]
     ST --> MM[🧠 Memory Store]
-    
+
     SC --> JWT[🔑 JWT Token]
     JWT --> RF[🔄 Refresh Token]
-    
+
     U --> REQ[📤 Request]
     REQ --> SV[✅ Session Validate]
     SV --> SU[🔄 Session Update]
     SU --> ACT[⚡ Activity Track]
-    
+
     ACT --> MT[📊 Metrics]
     ACT --> LOG[📝 Audit Log]
-    
+
     U --> LO[🚪 Logout]
     LO --> SD[🗑️ Session Destroy]
-    
+
     AUTO[⏰ Auto Cleanup] --> SD
     EXP[⌛ Expiration] --> SD
 ```
@@ -41,10 +41,10 @@ graph TB
 ```javascript
 // src/services/sessionManager.js
 
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
-const Redis = require('redis');
-const { User } = require('../models');
+const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
+const Redis = require("redis");
+const { User } = require("../models");
 
 class SessionManager {
   constructor() {
@@ -57,28 +57,31 @@ class SessionManager {
   async setupRedis() {
     try {
       this.redis = Redis.createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:6379',
+        url: process.env.REDIS_URL || "redis://localhost:6379",
         retry_strategy: (options) => {
-          if (options.error && options.error.code === 'ECONNREFUSED') {
-            console.error('Redis server отказал в подключении');
+          if (options.error && options.error.code === "ECONNREFUSED") {
+            console.error("Redis server отказал в подключении");
             return undefined;
           }
           if (options.total_retry_time > 1000 * 60 * 60) {
-            console.error('Превышено время переподключения к Redis');
+            console.error("Превышено время переподключения к Redis");
             return undefined;
           }
           if (options.attempt > 10) {
-            console.error('Превышено количество попыток подключения к Redis');
+            console.error("Превышено количество попыток подключения к Redis");
             return undefined;
           }
           return Math.min(options.attempt * 100, 3000);
-        }
+        },
       });
 
       await this.redis.connect();
-      console.log('✅ Redis подключен для управления сессиями');
+      console.log("✅ Redis подключен для управления сессиями");
     } catch (error) {
-      console.warn('⚠️ Redis недоступен, используется memory store:', error.message);
+      console.warn(
+        "⚠️ Redis недоступен, используется memory store:",
+        error.message
+      );
       this.redis = null;
     }
   }
@@ -91,7 +94,7 @@ class SessionManager {
     }, 15 * 60 * 1000);
 
     // Очистка при завершении процесса
-    process.on('SIGTERM', async () => {
+    process.on("SIGTERM", async () => {
       await this.destroyAllSessions();
     });
   }
@@ -101,29 +104,31 @@ class SessionManager {
     try {
       const sessionId = this.generateSessionId();
       const now = new Date();
-      
+
       const sessionData = {
         sessionId: sessionId,
         userId: userId,
         createdAt: now.toISOString(),
         lastActivity: now.toISOString(),
-        expiresAt: new Date(now.getTime() + (options.maxAge || 24 * 60 * 60 * 1000)).toISOString(), // 24 часа по умолчанию
+        expiresAt: new Date(
+          now.getTime() + (options.maxAge || 24 * 60 * 60 * 1000)
+        ).toISOString(), // 24 часа по умолчанию
         device: {
-          userAgent: deviceInfo.userAgent || '',
-          ip: deviceInfo.ip || '',
-          fingerprint: deviceInfo.fingerprint || '',
-          platform: deviceInfo.platform || '',
-          browser: deviceInfo.browser || ''
+          userAgent: deviceInfo.userAgent || "",
+          ip: deviceInfo.ip || "",
+          fingerprint: deviceInfo.fingerprint || "",
+          platform: deviceInfo.platform || "",
+          browser: deviceInfo.browser || "",
         },
         security: {
           isActive: true,
           loginAttempts: 0,
           lastLoginAt: now.toISOString(),
           riskScore: this.calculateRiskScore(deviceInfo),
-          flags: []
+          flags: [],
         },
         permissions: options.permissions || [],
-        metadata: options.metadata || {}
+        metadata: options.metadata || {},
       };
 
       // Сохраняем сессию
@@ -136,9 +141,9 @@ class SessionManager {
       const refreshToken = await this.createRefreshToken(sessionId, userId);
 
       // Логируем создание сессии
-      await this.logSessionEvent(sessionId, 'SESSION_CREATED', {
+      await this.logSessionEvent(sessionId, "SESSION_CREATED", {
         userId: userId,
-        device: deviceInfo
+        device: deviceInfo,
       });
 
       return {
@@ -146,19 +151,18 @@ class SessionManager {
         accessToken: jwtToken,
         refreshToken: refreshToken,
         expiresAt: sessionData.expiresAt,
-        device: sessionData.device
+        device: sessionData.device,
       };
-
     } catch (error) {
-      console.error('Ошибка создания сессии:', error);
-      throw new Error('Не удалось создать сессию');
+      console.error("Ошибка создания сессии:", error);
+      throw new Error("Не удалось создать сессию");
     }
   }
 
   // Генерация уникального ID сессии
   generateSessionId() {
     const timestamp = Date.now().toString(36);
-    const randomBytes = crypto.randomBytes(16).toString('hex');
+    const randomBytes = crypto.randomBytes(16).toString("hex");
     return `sess_${timestamp}_${randomBytes}`;
   }
 
@@ -188,13 +192,18 @@ class SessionManager {
   // Проверка подозрительного User-Agent
   isSuspiciousUserAgent(userAgent) {
     if (!userAgent) return true;
-    
+
     const suspiciousPatterns = [
-      /bot/i, /crawler/i, /spider/i, /scraper/i,
-      /headless/i, /phantom/i, /selenium/i
+      /bot/i,
+      /crawler/i,
+      /spider/i,
+      /scraper/i,
+      /headless/i,
+      /phantom/i,
+      /selenium/i,
     ];
-    
-    return suspiciousPatterns.some(pattern => pattern.test(userAgent));
+
+    return suspiciousPatterns.some((pattern) => pattern.test(userAgent));
   }
 
   // Создание JWT токена
@@ -203,17 +212,17 @@ class SessionManager {
       sessionId: sessionData.sessionId,
       userId: sessionData.userId,
       iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(new Date(sessionData.expiresAt).getTime() / 1000)
+      exp: Math.floor(new Date(sessionData.expiresAt).getTime() / 1000),
     };
 
     return jwt.sign(payload, process.env.JWT_SECRET, {
-      algorithm: 'HS256'
+      algorithm: "HS256",
     });
   }
 
   // Создание refresh token
   async createRefreshToken(sessionId, userId) {
-    const refreshToken = crypto.randomBytes(32).toString('hex');
+    const refreshToken = crypto.randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 дней
 
     const refreshData = {
@@ -222,7 +231,7 @@ class SessionManager {
       userId: userId,
       createdAt: new Date().toISOString(),
       expiresAt: expiresAt.toISOString(),
-      isUsed: false
+      isUsed: false,
     };
 
     // Сохраняем refresh token
@@ -235,13 +244,19 @@ class SessionManager {
   async saveSession(sessionId, sessionData) {
     try {
       if (this.redis) {
-        const ttl = Math.floor((new Date(sessionData.expiresAt) - Date.now()) / 1000);
-        await this.redis.setEx(`session:${sessionId}`, ttl, JSON.stringify(sessionData));
+        const ttl = Math.floor(
+          (new Date(sessionData.expiresAt) - Date.now()) / 1000
+        );
+        await this.redis.setEx(
+          `session:${sessionId}`,
+          ttl,
+          JSON.stringify(sessionData)
+        );
       } else {
         this.sessions.set(sessionId, sessionData);
       }
     } catch (error) {
-      console.error('Ошибка сохранения сессии:', error);
+      console.error("Ошибка сохранения сессии:", error);
       throw error;
     }
   }
@@ -256,7 +271,7 @@ class SessionManager {
         return this.sessions.get(sessionId) || null;
       }
     } catch (error) {
-      console.error('Ошибка получения сессии:', error);
+      console.error("Ошибка получения сессии:", error);
       return null;
     }
   }
@@ -265,59 +280,60 @@ class SessionManager {
   async validateSession(sessionId, request = {}) {
     try {
       const sessionData = await this.getSession(sessionId);
-      
+
       if (!sessionData) {
-        return { valid: false, reason: 'SESSION_NOT_FOUND' };
+        return { valid: false, reason: "SESSION_NOT_FOUND" };
       }
 
       // Проверка активности
       if (!sessionData.security.isActive) {
-        return { valid: false, reason: 'SESSION_INACTIVE' };
+        return { valid: false, reason: "SESSION_INACTIVE" };
       }
 
       // Проверка истечения
       if (new Date() > new Date(sessionData.expiresAt)) {
         await this.destroySession(sessionId);
-        return { valid: false, reason: 'SESSION_EXPIRED' };
+        return { valid: false, reason: "SESSION_EXPIRED" };
       }
 
       // Проверка устройства (опционально)
-      if (request.deviceFingerprint && 
-          sessionData.device.fingerprint && 
-          request.deviceFingerprint !== sessionData.device.fingerprint) {
-        
-        await this.flagSession(sessionId, 'DEVICE_MISMATCH');
-        
+      if (
+        request.deviceFingerprint &&
+        sessionData.device.fingerprint &&
+        request.deviceFingerprint !== sessionData.device.fingerprint
+      ) {
+        await this.flagSession(sessionId, "DEVICE_MISMATCH");
+
         // В зависимости от политики безопасности
         if (sessionData.security.riskScore > 50) {
-          return { valid: false, reason: 'DEVICE_MISMATCH' };
+          return { valid: false, reason: "DEVICE_MISMATCH" };
         }
       }
 
       // Проверка IP (если включена строгая проверка)
-      if (process.env.STRICT_IP_CHECK === 'true' && 
-          request.ip && 
-          sessionData.device.ip !== request.ip) {
-        
-        await this.flagSession(sessionId, 'IP_CHANGE');
-        
+      if (
+        process.env.STRICT_IP_CHECK === "true" &&
+        request.ip &&
+        sessionData.device.ip !== request.ip
+      ) {
+        await this.flagSession(sessionId, "IP_CHANGE");
+
         if (sessionData.security.riskScore > 70) {
-          return { valid: false, reason: 'IP_MISMATCH' };
+          return { valid: false, reason: "IP_MISMATCH" };
         }
       }
 
       // Обновляем активность
       await this.updateSessionActivity(sessionId, request);
 
-      return { 
-        valid: true, 
+      return {
+        valid: true,
         session: sessionData,
-        riskScore: sessionData.security.riskScore
+        riskScore: sessionData.security.riskScore,
       };
-
     } catch (error) {
-      console.error('Ошибка валидации сессии:', error);
-      return { valid: false, reason: 'VALIDATION_ERROR' };
+      console.error("Ошибка валидации сессии:", error);
+      return { valid: false, reason: "VALIDATION_ERROR" };
     }
   }
 
@@ -332,21 +348,21 @@ class SessionManager {
 
       // Обновляем метрики активности
       if (!sessionData.metrics) sessionData.metrics = {};
-      sessionData.metrics.requestCount = (sessionData.metrics.requestCount || 0) + 1;
-      sessionData.metrics.lastEndpoint = request.endpoint || '';
-      sessionData.metrics.lastUserAgent = request.userAgent || '';
+      sessionData.metrics.requestCount =
+        (sessionData.metrics.requestCount || 0) + 1;
+      sessionData.metrics.lastEndpoint = request.endpoint || "";
+      sessionData.metrics.lastUserAgent = request.userAgent || "";
 
       // Продляем сессию при активности (опционально)
-      if (process.env.EXTEND_SESSION_ON_ACTIVITY === 'true') {
+      if (process.env.EXTEND_SESSION_ON_ACTIVITY === "true") {
         const newExpiration = new Date(Date.now() + 24 * 60 * 60 * 1000);
         sessionData.expiresAt = newExpiration.toISOString();
       }
 
       await this.saveSession(sessionId, sessionData);
       return true;
-
     } catch (error) {
-      console.error('Ошибка обновления активности сессии:', error);
+      console.error("Ошибка обновления активности сессии:", error);
       return false;
     }
   }
@@ -359,31 +375,34 @@ class SessionManager {
 
       if (!sessionData.security.flags.includes(flag)) {
         sessionData.security.flags.push(flag);
-        
+
         // Увеличиваем risk score
         switch (flag) {
-          case 'DEVICE_MISMATCH':
+          case "DEVICE_MISMATCH":
             sessionData.security.riskScore += 25;
             break;
-          case 'IP_CHANGE':
+          case "IP_CHANGE":
             sessionData.security.riskScore += 15;
             break;
-          case 'SUSPICIOUS_ACTIVITY':
+          case "SUSPICIOUS_ACTIVITY":
             sessionData.security.riskScore += 30;
             break;
         }
 
-        sessionData.security.riskScore = Math.min(sessionData.security.riskScore, 100);
-        
+        sessionData.security.riskScore = Math.min(
+          sessionData.security.riskScore,
+          100
+        );
+
         await this.saveSession(sessionId, sessionData);
-        
+
         // Логируем событие
-        await this.logSessionEvent(sessionId, 'SESSION_FLAGGED', { flag });
+        await this.logSessionEvent(sessionId, "SESSION_FLAGGED", { flag });
       }
 
       return true;
     } catch (error) {
-      console.error('Ошибка пометки сессии:', error);
+      console.error("Ошибка пометки сессии:", error);
       return false;
     }
   }
@@ -392,24 +411,24 @@ class SessionManager {
   async refreshToken(refreshToken) {
     try {
       const refreshData = await this.getRefreshToken(refreshToken);
-      
+
       if (!refreshData) {
-        return { success: false, reason: 'INVALID_REFRESH_TOKEN' };
+        return { success: false, reason: "INVALID_REFRESH_TOKEN" };
       }
 
       if (refreshData.isUsed) {
-        return { success: false, reason: 'REFRESH_TOKEN_ALREADY_USED' };
+        return { success: false, reason: "REFRESH_TOKEN_ALREADY_USED" };
       }
 
       if (new Date() > new Date(refreshData.expiresAt)) {
         await this.destroyRefreshToken(refreshToken);
-        return { success: false, reason: 'REFRESH_TOKEN_EXPIRED' };
+        return { success: false, reason: "REFRESH_TOKEN_EXPIRED" };
       }
 
       // Получаем сессию
       const sessionData = await this.getSession(refreshData.sessionId);
       if (!sessionData) {
-        return { success: false, reason: 'SESSION_NOT_FOUND' };
+        return { success: false, reason: "SESSION_NOT_FOUND" };
       }
 
       // Помечаем старый refresh token как использованный
@@ -419,35 +438,37 @@ class SessionManager {
 
       // Создаем новые токены
       const newJwtToken = this.createJWTToken(sessionData);
-      const newRefreshToken = await this.createRefreshToken(refreshData.sessionId, refreshData.userId);
+      const newRefreshToken = await this.createRefreshToken(
+        refreshData.sessionId,
+        refreshData.userId
+      );
 
       // Обновляем активность сессии
       await this.updateSessionActivity(refreshData.sessionId);
 
       // Логируем обновление
-      await this.logSessionEvent(refreshData.sessionId, 'TOKEN_REFRESHED');
+      await this.logSessionEvent(refreshData.sessionId, "TOKEN_REFRESHED");
 
       return {
         success: true,
         accessToken: newJwtToken,
         refreshToken: newRefreshToken,
-        expiresAt: sessionData.expiresAt
+        expiresAt: sessionData.expiresAt,
       };
-
     } catch (error) {
-      console.error('Ошибка обновления токена:', error);
-      return { success: false, reason: 'REFRESH_ERROR' };
+      console.error("Ошибка обновления токена:", error);
+      return { success: false, reason: "REFRESH_ERROR" };
     }
   }
 
   // Завершение сессии
-  async destroySession(sessionId, reason = 'LOGOUT') {
+  async destroySession(sessionId, reason = "LOGOUT") {
     try {
       const sessionData = await this.getSession(sessionId);
-      
+
       if (sessionData) {
         // Логируем завершение сессии
-        await this.logSessionEvent(sessionId, 'SESSION_DESTROYED', { reason });
+        await this.logSessionEvent(sessionId, "SESSION_DESTROYED", { reason });
 
         // Удаляем все связанные refresh tokens
         await this.destroyUserRefreshTokens(sessionData.userId, sessionId);
@@ -462,7 +483,7 @@ class SessionManager {
 
       return true;
     } catch (error) {
-      console.error('Ошибка завершения сессии:', error);
+      console.error("Ошибка завершения сессии:", error);
       return false;
     }
   }
@@ -471,16 +492,16 @@ class SessionManager {
   async destroyUserSessions(userId, exceptSessionId = null) {
     try {
       const userSessions = await this.getUserSessions(userId);
-      
+
       for (const session of userSessions) {
         if (session.sessionId !== exceptSessionId) {
-          await this.destroySession(session.sessionId, 'ALL_SESSIONS_LOGOUT');
+          await this.destroySession(session.sessionId, "ALL_SESSIONS_LOGOUT");
         }
       }
 
       return true;
     } catch (error) {
-      console.error('Ошибка завершения сессий пользователя:', error);
+      console.error("Ошибка завершения сессий пользователя:", error);
       return false;
     }
   }
@@ -491,7 +512,7 @@ class SessionManager {
       const sessions = [];
 
       if (this.redis) {
-        const keys = await this.redis.keys('session:*');
+        const keys = await this.redis.keys("session:*");
         for (const key of keys) {
           const data = await this.redis.get(key);
           if (data) {
@@ -511,7 +532,7 @@ class SessionManager {
 
       return sessions;
     } catch (error) {
-      console.error('Ошибка получения сессий пользователя:', error);
+      console.error("Ошибка получения сессий пользователя:", error);
       return [];
     }
   }
@@ -524,7 +545,7 @@ class SessionManager {
         await this.redis.setEx(`refresh:${token}`, ttl, JSON.stringify(data));
       }
     } catch (error) {
-      console.error('Ошибка сохранения refresh token:', error);
+      console.error("Ошибка сохранения refresh token:", error);
     }
   }
 
@@ -537,7 +558,7 @@ class SessionManager {
       }
       return null;
     } catch (error) {
-      console.error('Ошибка получения refresh token:', error);
+      console.error("Ошибка получения refresh token:", error);
       return null;
     }
   }
@@ -549,7 +570,7 @@ class SessionManager {
         await this.redis.del(`refresh:${token}`);
       }
     } catch (error) {
-      console.error('Ошибка удаления refresh token:', error);
+      console.error("Ошибка удаления refresh token:", error);
     }
   }
 
@@ -557,20 +578,22 @@ class SessionManager {
   async destroyUserRefreshTokens(userId, sessionId = null) {
     try {
       if (this.redis) {
-        const keys = await this.redis.keys('refresh:*');
+        const keys = await this.redis.keys("refresh:*");
         for (const key of keys) {
           const data = await this.redis.get(key);
           if (data) {
             const refreshData = JSON.parse(data);
-            if (refreshData.userId === userId && 
-                (!sessionId || refreshData.sessionId === sessionId)) {
+            if (
+              refreshData.userId === userId &&
+              (!sessionId || refreshData.sessionId === sessionId)
+            ) {
               await this.redis.del(key);
             }
           }
         }
       }
     } catch (error) {
-      console.error('Ошибка удаления refresh tokens пользователя:', error);
+      console.error("Ошибка удаления refresh tokens пользователя:", error);
     }
   }
 
@@ -580,7 +603,7 @@ class SessionManager {
       let cleanedCount = 0;
 
       if (this.redis) {
-        const keys = await this.redis.keys('session:*');
+        const keys = await this.redis.keys("session:*");
         for (const key of keys) {
           const ttl = await this.redis.ttl(key);
           if (ttl <= 0) {
@@ -604,7 +627,7 @@ class SessionManager {
 
       return cleanedCount;
     } catch (error) {
-      console.error('Ошибка очистки истекших сессий:', error);
+      console.error("Ошибка очистки истекших сессий:", error);
       return 0;
     }
   }
@@ -616,17 +639,16 @@ class SessionManager {
         sessionId: sessionId,
         eventType: eventType,
         timestamp: new Date().toISOString(),
-        details: details
+        details: details,
       };
 
       // Логируем в консоль
-      console.log('📝 Session Event:', logEntry);
+      console.log("📝 Session Event:", logEntry);
 
       // Можно добавить сохранение в базу данных
       // await SessionLog.create(logEntry);
-
     } catch (error) {
-      console.error('Ошибка логирования события сессии:', error);
+      console.error("Ошибка логирования события сессии:", error);
     }
   }
 
@@ -634,23 +656,23 @@ class SessionManager {
   async destroyAllSessions() {
     try {
       if (this.redis) {
-        const sessionKeys = await this.redis.keys('session:*');
-        const refreshKeys = await this.redis.keys('refresh:*');
-        
+        const sessionKeys = await this.redis.keys("session:*");
+        const refreshKeys = await this.redis.keys("refresh:*");
+
         if (sessionKeys.length > 0) {
           await this.redis.del(...sessionKeys);
         }
-        
+
         if (refreshKeys.length > 0) {
           await this.redis.del(...refreshKeys);
         }
-        
+
         console.log(`🧹 Завершено ${sessionKeys.length} сессий при выключении`);
       } else {
         this.sessions.clear();
       }
     } catch (error) {
-      console.error('Ошибка завершения всех сессий:', error);
+      console.error("Ошибка завершения всех сессий:", error);
     }
   }
 
@@ -664,13 +686,13 @@ class SessionManager {
         flaggedSessions: 0,
         userDistribution: {},
         deviceDistribution: {},
-        riskDistribution: { low: 0, medium: 0, high: 0 }
+        riskDistribution: { low: 0, medium: 0, high: 0 },
       };
 
       const sessions = [];
 
       if (this.redis) {
-        const keys = await this.redis.keys('session:*');
+        const keys = await this.redis.keys("session:*");
         for (const key of keys) {
           const data = await this.redis.get(key);
           if (data) {
@@ -698,12 +720,12 @@ class SessionManager {
         }
 
         // Распределение по пользователям
-        stats.userDistribution[session.userId] = 
+        stats.userDistribution[session.userId] =
           (stats.userDistribution[session.userId] || 0) + 1;
 
         // Распределение по платформам
-        const platform = session.device.platform || 'unknown';
-        stats.deviceDistribution[platform] = 
+        const platform = session.device.platform || "unknown";
+        stats.deviceDistribution[platform] =
           (stats.deviceDistribution[platform] || 0) + 1;
 
         // Распределение по уровню риска
@@ -719,7 +741,7 @@ class SessionManager {
 
       return stats;
     } catch (error) {
-      console.error('Ошибка получения статистики сессий:', error);
+      console.error("Ошибка получения статистики сессий:", error);
       return null;
     }
   }
@@ -735,7 +757,7 @@ module.exports = SessionManager;
 ```javascript
 // src/middleware/sessionMiddleware.js
 
-const SessionManager = require('../services/sessionManager');
+const SessionManager = require("../services/sessionManager");
 
 class SessionMiddleware {
   constructor() {
@@ -748,33 +770,36 @@ class SessionMiddleware {
       try {
         // Получаем токен из заголовков
         const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
           return res.status(401).json({
             success: false,
-            message: 'Токен доступа не предоставлен',
-            code: 'NO_TOKEN'
+            message: "Токен доступа не предоставлен",
+            code: "NO_TOKEN",
           });
         }
 
         const token = authHeader.slice(7);
-        
+
         // Декодируем JWT
-        const jwt = require('jsonwebtoken');
+        const jwt = require("jsonwebtoken");
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
+
         // Валидируем сессию
-        const validation = await this.sessionManager.validateSession(decoded.sessionId, {
-          ip: req.ip,
-          userAgent: req.headers['user-agent'],
-          endpoint: req.originalUrl,
-          deviceFingerprint: req.headers['x-device-fingerprint']
-        });
+        const validation = await this.sessionManager.validateSession(
+          decoded.sessionId,
+          {
+            ip: req.ip,
+            userAgent: req.headers["user-agent"],
+            endpoint: req.originalUrl,
+            deviceFingerprint: req.headers["x-device-fingerprint"],
+          }
+        );
 
         if (!validation.valid) {
           return res.status(401).json({
             success: false,
-            message: 'Недействительная сессия',
-            code: validation.reason
+            message: "Недействительная сессия",
+            code: validation.reason,
           });
         }
 
@@ -784,21 +809,20 @@ class SessionMiddleware {
         req.riskScore = validation.riskScore;
 
         next();
-
       } catch (error) {
-        if (error.name === 'TokenExpiredError') {
+        if (error.name === "TokenExpiredError") {
           return res.status(401).json({
             success: false,
-            message: 'Токен истек',
-            code: 'TOKEN_EXPIRED'
+            message: "Токен истек",
+            code: "TOKEN_EXPIRED",
           });
         }
 
-        console.error('Ошибка валидации сессии:', error);
+        console.error("Ошибка валидации сессии:", error);
         return res.status(401).json({
           success: false,
-          message: 'Ошибка проверки сессии',
-          code: 'SESSION_ERROR'
+          message: "Ошибка проверки сессии",
+          code: "SESSION_ERROR",
         });
       }
     };
@@ -810,9 +834,10 @@ class SessionMiddleware {
       if (req.riskScore > 70) {
         return res.status(403).json({
           success: false,
-          message: 'Высокий уровень риска. Требуется дополнительная верификация',
-          code: 'HIGH_RISK_SESSION',
-          riskScore: req.riskScore
+          message:
+            "Высокий уровень риска. Требуется дополнительная верификация",
+          code: "HIGH_RISK_SESSION",
+          riskScore: req.riskScore,
         });
       }
       next();
@@ -825,23 +850,29 @@ class SessionMiddleware {
       try {
         const userId = req.user.userId;
         const userSessions = await this.sessionManager.getUserSessions(userId);
-        
+
         if (userSessions.length > maxSessions) {
           // Завершаем самые старые сессии
-          const sortedSessions = userSessions.sort((a, b) => 
-            new Date(a.lastActivity) - new Date(b.lastActivity)
+          const sortedSessions = userSessions.sort(
+            (a, b) => new Date(a.lastActivity) - new Date(b.lastActivity)
           );
-          
-          const sessionsToRemove = sortedSessions.slice(0, userSessions.length - maxSessions);
-          
+
+          const sessionsToRemove = sortedSessions.slice(
+            0,
+            userSessions.length - maxSessions
+          );
+
           for (const session of sessionsToRemove) {
-            await this.sessionManager.destroySession(session.sessionId, 'MAX_SESSIONS_EXCEEDED');
+            await this.sessionManager.destroySession(
+              session.sessionId,
+              "MAX_SESSIONS_EXCEEDED"
+            );
           }
         }
-        
+
         next();
       } catch (error) {
-        console.error('Ошибка ограничения сессий:', error);
+        console.error("Ошибка ограничения сессий:", error);
         next();
       }
     };
@@ -855,20 +886,23 @@ class SessionMiddleware {
           const activity = {
             endpoint: req.originalUrl,
             method: req.method,
-            userAgent: req.headers['user-agent'],
+            userAgent: req.headers["user-agent"],
             ip: req.ip,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           };
 
           // Логируем подозрительную активность
           if (this.isSuspiciousActivity(activity, req.session)) {
-            await this.sessionManager.flagSession(req.session.sessionId, 'SUSPICIOUS_ACTIVITY');
+            await this.sessionManager.flagSession(
+              req.session.sessionId,
+              "SUSPICIOUS_ACTIVITY"
+            );
           }
         }
-        
+
         next();
       } catch (error) {
-        console.error('Ошибка логирования активности:', error);
+        console.error("Ошибка логирования активности:", error);
         next();
       }
     };
@@ -878,15 +912,20 @@ class SessionMiddleware {
   isSuspiciousActivity(activity, session) {
     // Слишком много запросов в короткое время
     const recentRequests = session.metrics?.requestCount || 0;
-    if (recentRequests > 100) { // За сессию
+    if (recentRequests > 100) {
+      // За сессию
       return true;
     }
 
     // Подозрительные эндпоинты
-    const suspiciousEndpoints = ['/admin/', '/api/users/', '/api/system/'];
-    if (suspiciousEndpoints.some(endpoint => activity.endpoint.includes(endpoint))) {
+    const suspiciousEndpoints = ["/admin/", "/api/users/", "/api/system/"];
+    if (
+      suspiciousEndpoints.some((endpoint) =>
+        activity.endpoint.includes(endpoint)
+      )
+    ) {
       const userRoles = session.permissions || [];
-      if (!userRoles.includes('admin')) {
+      if (!userRoles.includes("admin")) {
         return true;
       }
     }
@@ -904,22 +943,22 @@ class SessionMiddleware {
     return async (req, res, next) => {
       try {
         const { refreshToken } = req.body;
-        
+
         if (!refreshToken) {
           return res.status(400).json({
             success: false,
-            message: 'Refresh token не предоставлен',
-            code: 'NO_REFRESH_TOKEN'
+            message: "Refresh token не предоставлен",
+            code: "NO_REFRESH_TOKEN",
           });
         }
 
         const result = await this.sessionManager.refreshToken(refreshToken);
-        
+
         if (!result.success) {
           return res.status(401).json({
             success: false,
-            message: 'Не удалось обновить токен',
-            code: result.reason
+            message: "Не удалось обновить токен",
+            code: result.reason,
           });
         }
 
@@ -927,15 +966,14 @@ class SessionMiddleware {
           success: true,
           token: result.accessToken,
           refreshToken: result.refreshToken,
-          expiresAt: result.expiresAt
+          expiresAt: result.expiresAt,
         });
-
       } catch (error) {
-        console.error('Ошибка обновления токена:', error);
+        console.error("Ошибка обновления токена:", error);
         res.status(500).json({
           success: false,
-          message: 'Ошибка обновления токена',
-          code: 'REFRESH_ERROR'
+          message: "Ошибка обновления токена",
+          code: "REFRESH_ERROR",
         });
       }
     };
@@ -946,22 +984,21 @@ class SessionMiddleware {
     return async (req, res, next) => {
       try {
         const sessionId = req.session?.sessionId;
-        
+
         if (sessionId) {
-          await this.sessionManager.destroySession(sessionId, 'USER_LOGOUT');
+          await this.sessionManager.destroySession(sessionId, "USER_LOGOUT");
         }
 
         res.json({
           success: true,
-          message: 'Сессия завершена'
+          message: "Сессия завершена",
         });
-
       } catch (error) {
-        console.error('Ошибка завершения сессии:', error);
+        console.error("Ошибка завершения сессии:", error);
         res.status(500).json({
           success: false,
-          message: 'Ошибка завершения сессии',
-          code: 'LOGOUT_ERROR'
+          message: "Ошибка завершения сессии",
+          code: "LOGOUT_ERROR",
         });
       }
     };
@@ -973,20 +1010,19 @@ class SessionMiddleware {
       try {
         const userId = req.user.userId;
         const currentSessionId = req.session?.sessionId;
-        
+
         await this.sessionManager.destroyUserSessions(userId, currentSessionId);
 
         res.json({
           success: true,
-          message: 'Все сессии завершены'
+          message: "Все сессии завершены",
         });
-
       } catch (error) {
-        console.error('Ошибка завершения всех сессий:', error);
+        console.error("Ошибка завершения всех сессий:", error);
         res.status(500).json({
           success: false,
-          message: 'Ошибка завершения сессий',
-          code: 'LOGOUT_ALL_ERROR'
+          message: "Ошибка завершения сессий",
+          code: "LOGOUT_ALL_ERROR",
         });
       }
     };
@@ -998,33 +1034,32 @@ class SessionMiddleware {
       try {
         const userId = req.user.userId;
         const sessions = await this.sessionManager.getUserSessions(userId);
-        
+
         // Форматируем данные для клиента
-        const sessionInfo = sessions.map(session => ({
+        const sessionInfo = sessions.map((session) => ({
           sessionId: session.sessionId,
           createdAt: session.createdAt,
           lastActivity: session.lastActivity,
           device: {
             platform: session.device.platform,
             browser: session.device.browser,
-            ip: session.device.ip
+            ip: session.device.ip,
           },
           isCurrent: session.sessionId === req.session.sessionId,
           riskScore: session.security.riskScore,
-          flags: session.security.flags
+          flags: session.security.flags,
         }));
 
         res.json({
           success: true,
-          sessions: sessionInfo
+          sessions: sessionInfo,
         });
-
       } catch (error) {
-        console.error('Ошибка получения информации о сессиях:', error);
+        console.error("Ошибка получения информации о сессиях:", error);
         res.status(500).json({
           success: false,
-          message: 'Ошибка получения информации о сессиях',
-          code: 'SESSION_INFO_ERROR'
+          message: "Ошибка получения информации о сессиях",
+          code: "SESSION_INFO_ERROR",
         });
       }
     };
@@ -1056,25 +1091,25 @@ class SessionClient {
     }, 5 * 60 * 1000);
 
     // Проверяем при восстановлении соединения
-    window.addEventListener('online', () => {
+    window.addEventListener("online", () => {
       this.checkSessionHealth();
     });
 
     // Проверяем при фокусе на окне
-    window.addEventListener('focus', () => {
+    window.addEventListener("focus", () => {
       this.checkSessionHealth();
     });
   }
 
   // Отслеживание активности пользователя
   setupActivityTracking() {
-    const events = ['click', 'keypress', 'scroll', 'mousemove'];
+    const events = ["click", "keypress", "scroll", "mousemove"];
     let lastActivity = Date.now();
     let inactivityTimer = null;
 
     const updateActivity = () => {
       lastActivity = Date.now();
-      
+
       // Сбрасываем таймер неактивности
       if (inactivityTimer) {
         clearTimeout(inactivityTimer);
@@ -1086,7 +1121,7 @@ class SessionClient {
       }, 30 * 60 * 1000);
     };
 
-    events.forEach(event => {
+    events.forEach((event) => {
       document.addEventListener(event, updateActivity, { passive: true });
     });
 
@@ -1096,19 +1131,19 @@ class SessionClient {
 
   // Обработка перед закрытием страницы
   setupBeforeUnload() {
-    window.addEventListener('beforeunload', (event) => {
+    window.addEventListener("beforeunload", (event) => {
       // Сохраняем состояние сессии
       this.saveSessionState();
-      
+
       // Отправляем beacon для логирования
       if (navigator.sendBeacon) {
         const data = JSON.stringify({
-          action: 'page_unload',
+          action: "page_unload",
           timestamp: Date.now(),
-          sessionId: this.getSessionId()
+          sessionId: this.getSessionId(),
         });
-        
-        navigator.sendBeacon('/api/auth/session-activity', data);
+
+        navigator.sendBeacon("/api/auth/session-activity", data);
       }
     });
   }
@@ -1119,12 +1154,12 @@ class SessionClient {
       const token = Auth.getToken();
       if (!token) return;
 
-      const response = await fetch('/api/auth/session-check', {
-        method: 'GET',
+      const response = await fetch("/api/auth/session-check", {
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'X-Device-Fingerprint': this.getDeviceFingerprint()
-        }
+          Authorization: `Bearer ${token}`,
+          "X-Device-Fingerprint": this.getDeviceFingerprint(),
+        },
       });
 
       if (response.status === 401) {
@@ -1141,68 +1176,67 @@ class SessionClient {
         const data = await response.json();
         this.updateSessionInfo(data);
       }
-
     } catch (error) {
-      console.error('Ошибка проверки сессии:', error);
+      console.error("Ошибка проверки сессии:", error);
     }
   }
 
   // Обновление сессии
   async refreshSession() {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = localStorage.getItem("refreshToken");
       if (!refreshToken) return false;
 
-      const response = await fetch('/api/auth/refresh', {
-        method: 'POST',
+      const response = await fetch("/api/auth/refresh", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ refreshToken })
+        body: JSON.stringify({ refreshToken }),
       });
 
       if (response.ok) {
         const data = await response.json();
         Auth.saveToken(data.token);
-        localStorage.setItem('refreshToken', data.refreshToken);
-        
-        console.log('🔄 Сессия обновлена');
+        localStorage.setItem("refreshToken", data.refreshToken);
+
+        console.log("🔄 Сессия обновлена");
         return true;
       }
 
       return false;
     } catch (error) {
-      console.error('Ошибка обновления сессии:', error);
+      console.error("Ошибка обновления сессии:", error);
       return false;
     }
   }
 
   // Обработка истечения сессии
   handleSessionExpired() {
-    Notifications.warning('Ваша сессия истекла. Требуется повторный вход.');
-    
+    Notifications.warning("Ваша сессия истекла. Требуется повторный вход.");
+
     // Очищаем данные
     Auth.logout();
-    
+
     // Перенаправляем на страницу входа
     setTimeout(() => {
-      window.location.href = '/login.html?session=expired';
+      window.location.href = "/login.html?session=expired";
     }, 2000);
   }
 
   // Обработка сессии с высоким риском
   handleHighRiskSession(data) {
     const message = `Обнаружена подозрительная активность. Уровень риска: ${data.riskScore}`;
-    
+
     if (data.riskScore > 90) {
       // Критический уровень - принудительный выход
-      Notifications.error('Критический уровень риска. Сессия завершена.');
+      Notifications.error("Критический уровень риска. Сессия завершена.");
       Auth.logout();
-      window.location.href = '/login.html?risk=high';
+      window.location.href = "/login.html?risk=high";
     } else {
       // Предупреждение
       Notifications.warning(message);
-      
+
       // Предлагаем дополнительную верификацию
       this.offerAdditionalVerification();
     }
@@ -1211,18 +1245,18 @@ class SessionClient {
   // Предложение дополнительной верификации
   offerAdditionalVerification() {
     const verify = confirm(
-      'Для обеспечения безопасности рекомендуется пройти дополнительную верификацию. Продолжить?'
+      "Для обеспечения безопасности рекомендуется пройти дополнительную верификацию. Продолжить?"
     );
-    
+
     if (verify) {
-      window.location.href = '/verify.html';
+      window.location.href = "/verify.html";
     }
   }
 
   // Обработка неактивности
   handleInactivity() {
-    const modal = document.createElement('div');
-    modal.className = 'inactivity-modal';
+    const modal = document.createElement("div");
+    modal.className = "inactivity-modal";
     modal.innerHTML = `
       <div class="modal-content">
         <h3>⏰ Длительная неактивность</h3>
@@ -1237,28 +1271,28 @@ class SessionClient {
     document.body.appendChild(modal);
 
     // Обработчики кнопок
-    document.getElementById('extend-session').onclick = () => {
+    document.getElementById("extend-session").onclick = () => {
       this.extendSession();
       document.body.removeChild(modal);
     };
 
-    document.getElementById('logout-now').onclick = () => {
+    document.getElementById("logout-now").onclick = () => {
       Auth.logout();
-      window.location.href = '/login.html';
+      window.location.href = "/login.html";
     };
 
     // Обратный отсчет
     let countdown = 60;
-    const countdownElement = document.getElementById('countdown');
-    
+    const countdownElement = document.getElementById("countdown");
+
     const timer = setInterval(() => {
       countdown--;
       countdownElement.textContent = countdown;
-      
+
       if (countdown <= 0) {
         clearInterval(timer);
         Auth.logout();
-        window.location.href = '/login.html?reason=inactivity';
+        window.location.href = "/login.html?reason=inactivity";
       }
     }, 1000);
 
@@ -1275,23 +1309,23 @@ class SessionClient {
   async extendSession() {
     try {
       const token = Auth.getToken();
-      const response = await fetch('/api/auth/extend-session', {
-        method: 'POST',
+      const response = await fetch("/api/auth/extend-session", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (response.ok) {
-        Notifications.success('Сессия продлена');
+        Notifications.success("Сессия продлена");
         return true;
       } else {
-        throw new Error('Не удалось продлить сессию');
+        throw new Error("Не удалось продлить сессию");
       }
     } catch (error) {
-      console.error('Ошибка продления сессии:', error);
-      Notifications.error('Не удалось продлить сессию');
+      console.error("Ошибка продления сессии:", error);
+      Notifications.error("Не удалось продлить сессию");
       return false;
     }
   }
@@ -1300,20 +1334,20 @@ class SessionClient {
   async getSessionInfo() {
     try {
       const token = Auth.getToken();
-      const response = await fetch('/api/auth/sessions', {
-        method: 'GET',
+      const response = await fetch("/api/auth/sessions", {
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {
         return await response.json();
       }
-      
-      throw new Error('Не удалось получить информацию о сессиях');
+
+      throw new Error("Не удалось получить информацию о сессиях");
     } catch (error) {
-      console.error('Ошибка получения информации о сессиях:', error);
+      console.error("Ошибка получения информации о сессиях:", error);
       return null;
     }
   }
@@ -1323,21 +1357,21 @@ class SessionClient {
     try {
       const token = Auth.getToken();
       const response = await fetch(`/api/auth/sessions/${sessionId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {
-        Notifications.success('Сессия завершена');
+        Notifications.success("Сессия завершена");
         return true;
       }
-      
-      throw new Error('Не удалось завершить сессию');
+
+      throw new Error("Не удалось завершить сессию");
     } catch (error) {
-      console.error('Ошибка завершения сессии:', error);
-      Notifications.error('Не удалось завершить сессию');
+      console.error("Ошибка завершения сессии:", error);
+      Notifications.error("Не удалось завершить сессию");
       return false;
     }
   }
@@ -1345,20 +1379,22 @@ class SessionClient {
   // Утилиты
   getDeviceFingerprint() {
     // Создаем отпечаток устройства
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.textBaseline = 'top';
-    ctx.font = '14px Arial';
-    ctx.fillText('Device fingerprint', 2, 2);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    ctx.textBaseline = "top";
+    ctx.font = "14px Arial";
+    ctx.fillText("Device fingerprint", 2, 2);
 
-    return btoa(JSON.stringify({
-      screen: `${screen.width}x${screen.height}`,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      language: navigator.language,
-      platform: navigator.platform,
-      canvas: canvas.toDataURL(),
-      userAgent: navigator.userAgent.substring(0, 100)
-    })).substring(0, 32);
+    return btoa(
+      JSON.stringify({
+        screen: `${screen.width}x${screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: navigator.language,
+        platform: navigator.platform,
+        canvas: canvas.toDataURL(),
+        userAgent: navigator.userAgent.substring(0, 100),
+      })
+    ).substring(0, 32);
   }
 
   getSessionId() {
@@ -1366,7 +1402,7 @@ class SessionClient {
     if (!token) return null;
 
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const payload = JSON.parse(atob(token.split(".")[1]));
       return payload.sessionId;
     } catch {
       return null;
@@ -1377,23 +1413,27 @@ class SessionClient {
     const state = {
       timestamp: Date.now(),
       url: window.location.href,
-      scrollPosition: window.scrollY
+      scrollPosition: window.scrollY,
     };
-    
-    sessionStorage.setItem('sessionState', JSON.stringify(state));
+
+    sessionStorage.setItem("sessionState", JSON.stringify(state));
   }
 
   updateSessionInfo(data) {
     // Обновляем информацию о сессии в интерфейсе
-    const sessionInfo = document.getElementById('session-info');
+    const sessionInfo = document.getElementById("session-info");
     if (sessionInfo && data.session) {
       sessionInfo.innerHTML = `
         <div class="session-details">
-          <span class="risk-score risk-${this.getRiskLevel(data.session.riskScore)}">
+          <span class="risk-score risk-${this.getRiskLevel(
+            data.session.riskScore
+          )}">
             Уровень риска: ${data.session.riskScore}
           </span>
           <span class="last-activity">
-            Последняя активность: ${new Date(data.session.lastActivity).toLocaleString()}
+            Последняя активность: ${new Date(
+              data.session.lastActivity
+            ).toLocaleString()}
           </span>
         </div>
       `;
@@ -1401,22 +1441,22 @@ class SessionClient {
   }
 
   getRiskLevel(score) {
-    if (score < 30) return 'low';
-    if (score < 70) return 'medium';
-    return 'high';
+    if (score < 30) return "low";
+    if (score < 70) return "medium";
+    return "high";
   }
 }
 
 // Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
   if (Auth.isAuthenticated()) {
     window.sessionClient = new SessionClient();
-    console.log('📊 Session Client инициализирован');
+    console.log("📊 Session Client инициализирован");
   }
 });
 
 // Экспорт для модулей
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = SessionClient;
 }
 ```

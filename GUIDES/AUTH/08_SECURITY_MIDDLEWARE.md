@@ -19,7 +19,7 @@ graph TB
     AUTH --> AUTHZ[👮 Authorization]
     AUTHZ --> LOG[📝 Security Logging]
     LOG --> RESP[📤 Response]
-    
+
     LOG --> MON[📊 Security Monitor]
     MON --> ALERT[🚨 Alert System]
     ALERT --> BLK[🚫 Auto-Block]
@@ -32,59 +32,64 @@ graph TB
 ```javascript
 // src/middleware/securityMiddleware.js
 
-const rateLimit = require('express-rate-limit');
-const helmet = require('helmet');
-const cors = require('cors');
-const validator = require('validator');
-const xss = require('xss');
-const crypto = require('crypto');
+const rateLimit = require("express-rate-limit");
+const helmet = require("helmet");
+const cors = require("cors");
+const validator = require("validator");
+const xss = require("xss");
+const crypto = require("crypto");
 
 class SecurityMiddleware {
-  
   // Инициализация всех security middleware
   static initialize(app) {
     // Helmet для базовой защиты
-    app.use(helmet({
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'", "https:"],
-          scriptSrc: ["'self'", "'unsafe-inline'"],
-          imgSrc: ["'self'", "data:", "https:"],
-          connectSrc: ["'self'"],
-          fontSrc: ["'self'", "https:"],
-          objectSrc: ["'none'"],
-          mediaSrc: ["'self'"],
-          frameSrc: ["'none'"]
-        }
-      },
-      crossOriginEmbedderPolicy: false
-    }));
+    app.use(
+      helmet({
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'"],
+            fontSrc: ["'self'", "https:"],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'"],
+            frameSrc: ["'none'"],
+          },
+        },
+        crossOriginEmbedderPolicy: false,
+      })
+    );
 
     // CORS конфигурация
-    app.use(cors({
-      origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-    }));
+    app.use(
+      cors({
+        origin: process.env.ALLOWED_ORIGINS?.split(",") || [
+          "http://localhost:3000",
+        ],
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+      })
+    );
 
     // Rate limiting
-    app.use('/api/', this.createRateLimit());
-    
+    app.use("/api/", this.createRateLimit());
+
     // Защита от XSS
     app.use(this.xssProtection);
-    
+
     // CSRF защита
     app.use(this.csrfProtection);
-    
+
     // Валидация и санитизация
     app.use(this.inputValidation);
-    
+
     // Мониторинг безопасности
     app.use(this.securityMonitoring);
 
-    console.log('🔒 Security middleware инициализирован');
+    console.log("🔒 Security middleware инициализирован");
   }
 
   // Rate limiting с адаптивными лимитами
@@ -93,34 +98,34 @@ class SecurityMiddleware {
       windowMs: 15 * 60 * 1000, // 15 минут
       max: (req) => {
         // Адаптивные лимиты в зависимости от эндпоинта
-        if (req.path.includes('/auth/login')) return 5;
-        if (req.path.includes('/auth/register')) return 3;
-        if (req.path.includes('/auth/')) return 10;
-        if (req.user && req.user.roles?.includes('premium')) return 1000;
+        if (req.path.includes("/auth/login")) return 5;
+        if (req.path.includes("/auth/register")) return 3;
+        if (req.path.includes("/auth/")) return 10;
+        if (req.user && req.user.roles?.includes("premium")) return 1000;
         if (req.user) return 500;
         return 100;
       },
       message: {
         success: false,
-        message: 'Слишком много запросов с вашего IP',
-        code: 'RATE_LIMIT_EXCEEDED',
-        retryAfter: 15 * 60
+        message: "Слишком много запросов с вашего IP",
+        code: "RATE_LIMIT_EXCEEDED",
+        retryAfter: 15 * 60,
       },
       standardHeaders: true,
       legacyHeaders: false,
       handler: (req, res) => {
-        this.logSecurityEvent(req, 'RATE_LIMIT_EXCEEDED', {
+        this.logSecurityEvent(req, "RATE_LIMIT_EXCEEDED", {
           ip: req.ip,
-          userAgent: req.headers['user-agent'],
-          endpoint: req.path
+          userAgent: req.headers["user-agent"],
+          endpoint: req.path,
         });
-        
+
         res.status(429).json({
           success: false,
-          message: 'Слишком много запросов',
-          code: 'RATE_LIMIT_EXCEEDED'
+          message: "Слишком много запросов",
+          code: "RATE_LIMIT_EXCEEDED",
         });
-      }
+      },
     });
 
     return limiter;
@@ -130,39 +135,39 @@ class SecurityMiddleware {
   static xssProtection(req, res, next) {
     try {
       // Санитизация body
-      if (req.body && typeof req.body === 'object') {
+      if (req.body && typeof req.body === "object") {
         req.body = SecurityMiddleware.sanitizeObject(req.body);
       }
 
       // Санитизация query параметров
-      if (req.query && typeof req.query === 'object') {
+      if (req.query && typeof req.query === "object") {
         req.query = SecurityMiddleware.sanitizeObject(req.query);
       }
 
       // Санитизация params
-      if (req.params && typeof req.params === 'object') {
+      if (req.params && typeof req.params === "object") {
         req.params = SecurityMiddleware.sanitizeObject(req.params);
       }
 
       next();
     } catch (error) {
-      console.error('Ошибка XSS защиты:', error);
+      console.error("Ошибка XSS защиты:", error);
       res.status(400).json({
         success: false,
-        message: 'Обнаружен потенциально опасный контент',
-        code: 'XSS_DETECTED'
+        message: "Обнаружен потенциально опасный контент",
+        code: "XSS_DETECTED",
       });
     }
   }
 
   // Рекурсивная санитизация объекта
   static sanitizeObject(obj) {
-    if (typeof obj !== 'object' || obj === null) {
-      return typeof obj === 'string' ? xss(obj) : obj;
+    if (typeof obj !== "object" || obj === null) {
+      return typeof obj === "string" ? xss(obj) : obj;
     }
 
     if (Array.isArray(obj)) {
-      return obj.map(item => this.sanitizeObject(item));
+      return obj.map((item) => this.sanitizeObject(item));
     }
 
     const sanitized = {};
@@ -175,25 +180,29 @@ class SecurityMiddleware {
   // CSRF защита
   static csrfProtection(req, res, next) {
     // Пропускаем GET запросы
-    if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+    if (
+      req.method === "GET" ||
+      req.method === "HEAD" ||
+      req.method === "OPTIONS"
+    ) {
       return next();
     }
 
     // Проверяем CSRF токен для изменяющих запросов
-    const token = req.headers['x-csrf-token'] || req.body.csrfToken;
+    const token = req.headers["x-csrf-token"] || req.body.csrfToken;
     const sessionToken = req.session?.csrfToken;
 
     if (!token || !sessionToken || token !== sessionToken) {
-      SecurityMiddleware.logSecurityEvent(req, 'CSRF_TOKEN_INVALID', {
+      SecurityMiddleware.logSecurityEvent(req, "CSRF_TOKEN_INVALID", {
         provided: !!token,
         session: !!sessionToken,
-        match: token === sessionToken
+        match: token === sessionToken,
       });
 
       return res.status(403).json({
         success: false,
-        message: 'Недействительный CSRF токен',
-        code: 'CSRF_INVALID'
+        message: "Недействительный CSRF токен",
+        code: "CSRF_INVALID",
       });
     }
 
@@ -204,58 +213,58 @@ class SecurityMiddleware {
   static inputValidation(req, res, next) {
     try {
       // Проверка размера payload
-      const contentLength = parseInt(req.headers['content-length']) || 0;
+      const contentLength = parseInt(req.headers["content-length"]) || 0;
       const maxSize = 10 * 1024 * 1024; // 10MB
 
       if (contentLength > maxSize) {
         return res.status(413).json({
           success: false,
-          message: 'Размер запроса превышает допустимый лимит',
-          code: 'PAYLOAD_TOO_LARGE'
+          message: "Размер запроса превышает допустимый лимит",
+          code: "PAYLOAD_TOO_LARGE",
         });
       }
 
       // Проверка подозрительных паттернов в URL
       const suspiciousPatterns = [
-        /\.\./,  // Path traversal
-        /<script/i,  // XSS
-        /union.*select/i,  // SQL injection
-        /javascript:/i,  // Javascript injection
-        /%3c.*script/i  // Encoded XSS
+        /\.\./, // Path traversal
+        /<script/i, // XSS
+        /union.*select/i, // SQL injection
+        /javascript:/i, // Javascript injection
+        /%3c.*script/i, // Encoded XSS
       ];
 
       const url = req.originalUrl;
       for (const pattern of suspiciousPatterns) {
         if (pattern.test(url)) {
-          SecurityMiddleware.logSecurityEvent(req, 'SUSPICIOUS_URL_PATTERN', {
+          SecurityMiddleware.logSecurityEvent(req, "SUSPICIOUS_URL_PATTERN", {
             url: url,
-            pattern: pattern.toString()
+            pattern: pattern.toString(),
           });
 
           return res.status(400).json({
             success: false,
-            message: 'Обнаружен подозрительный паттерн в запросе',
-            code: 'SUSPICIOUS_PATTERN'
+            message: "Обнаружен подозрительный паттерн в запросе",
+            code: "SUSPICIOUS_PATTERN",
           });
         }
       }
 
       // Валидация User-Agent
-      const userAgent = req.headers['user-agent'];
+      const userAgent = req.headers["user-agent"];
       if (!userAgent || userAgent.length < 10 || userAgent.length > 500) {
-        SecurityMiddleware.logSecurityEvent(req, 'INVALID_USER_AGENT', {
+        SecurityMiddleware.logSecurityEvent(req, "INVALID_USER_AGENT", {
           userAgent: userAgent,
-          length: userAgent?.length || 0
+          length: userAgent?.length || 0,
         });
       }
 
       next();
     } catch (error) {
-      console.error('Ошибка валидации:', error);
+      console.error("Ошибка валидации:", error);
       res.status(500).json({
         success: false,
-        message: 'Ошибка валидации запроса',
-        code: 'VALIDATION_ERROR'
+        message: "Ошибка валидации запроса",
+        code: "VALIDATION_ERROR",
       });
     }
   }
@@ -264,28 +273,28 @@ class SecurityMiddleware {
   static securityMonitoring(req, res, next) {
     // Сохраняем время начала запроса
     req.startTime = Date.now();
-    
+
     // Перехватываем ответ для логирования
     const originalSend = res.send;
-    res.send = function(data) {
+    res.send = function (data) {
       req.responseTime = Date.now() - req.startTime;
       req.responseData = data;
-      
+
       // Логируем подозрительные ответы
       if (res.statusCode >= 400) {
-        SecurityMiddleware.logSecurityEvent(req, 'HTTP_ERROR', {
+        SecurityMiddleware.logSecurityEvent(req, "HTTP_ERROR", {
           statusCode: res.statusCode,
           responseTime: req.responseTime,
           endpoint: req.path,
-          method: req.method
+          method: req.method,
         });
       }
 
       // Проверяем на подозрительно медленные запросы
       if (req.responseTime > 5000) {
-        SecurityMiddleware.logSecurityEvent(req, 'SLOW_REQUEST', {
+        SecurityMiddleware.logSecurityEvent(req, "SLOW_REQUEST", {
           responseTime: req.responseTime,
-          endpoint: req.path
+          endpoint: req.path,
         });
       }
 
@@ -300,11 +309,11 @@ class SecurityMiddleware {
     const sqlPatterns = [
       /('|(\\)|(;)|(--)|(\s)|(\/\*)|(\*\/))/i,
       /(union|select|insert|delete|update|create|drop|exec|execute)/i,
-      /(script|javascript|vbscript|onload|onerror|onclick)/i
+      /(script|javascript|vbscript|onload|onerror|onclick)/i,
     ];
 
     const checkValue = (value) => {
-      if (typeof value === 'string') {
+      if (typeof value === "string") {
         for (const pattern of sqlPatterns) {
           if (pattern.test(value)) {
             return true;
@@ -319,7 +328,7 @@ class SecurityMiddleware {
         if (checkValue(key) || checkValue(value)) {
           return true;
         }
-        if (typeof value === 'object' && value !== null) {
+        if (typeof value === "object" && value !== null) {
           if (checkObject(value)) {
             return true;
           }
@@ -329,20 +338,21 @@ class SecurityMiddleware {
     };
 
     // Проверяем все входящие данные
-    if ((req.body && checkObject(req.body)) || 
-        (req.query && checkObject(req.query)) || 
-        (req.params && checkObject(req.params))) {
-      
-      SecurityMiddleware.logSecurityEvent(req, 'SQL_INJECTION_ATTEMPT', {
+    if (
+      (req.body && checkObject(req.body)) ||
+      (req.query && checkObject(req.query)) ||
+      (req.params && checkObject(req.params))
+    ) {
+      SecurityMiddleware.logSecurityEvent(req, "SQL_INJECTION_ATTEMPT", {
         body: req.body,
         query: req.query,
-        params: req.params
+        params: req.params,
       });
 
       return res.status(400).json({
         success: false,
-        message: 'Обнаружена попытка SQL инъекции',
-        code: 'SQL_INJECTION_DETECTED'
+        message: "Обнаружена попытка SQL инъекции",
+        code: "SQL_INJECTION_DETECTED",
       });
     }
 
@@ -355,20 +365,20 @@ class SecurityMiddleware {
       timestamp: new Date().toISOString(),
       type: eventType,
       ip: req.ip || req.connection.remoteAddress,
-      userAgent: req.headers['user-agent'],
+      userAgent: req.headers["user-agent"],
       url: req.originalUrl,
       method: req.method,
       userId: req.user?.userId || null,
       sessionId: req.sessionID || null,
-      ...details
+      ...details,
     };
 
     // Логируем в консоль
-    console.warn('🚨 Security Event:', event);
+    console.warn("🚨 Security Event:", event);
 
     // Сохраняем в базу данных (асинхронно)
-    this.saveSecurityEvent(event).catch(err => {
-      console.error('Ошибка сохранения события безопасности:', err);
+    this.saveSecurityEvent(event).catch((err) => {
+      console.error("Ошибка сохранения события безопасности:", err);
     });
 
     // Проверяем на критические события
@@ -380,28 +390,26 @@ class SecurityMiddleware {
     try {
       // Здесь можно добавить сохранение в базу данных
       // await SecurityLog.create(event);
-      
       // Или отправить в внешний сервис мониторинга
       // await this.sendToMonitoringService(event);
-      
     } catch (error) {
-      console.error('Ошибка сохранения события безопасности:', error);
+      console.error("Ошибка сохранения события безопасности:", error);
     }
   }
 
   // Проверка критических событий
   static checkCriticalEvent(event) {
     const criticalEvents = [
-      'SQL_INJECTION_ATTEMPT',
-      'XSS_DETECTED',
-      'MULTIPLE_FAILED_LOGINS',
-      'BRUTE_FORCE_DETECTED'
+      "SQL_INJECTION_ATTEMPT",
+      "XSS_DETECTED",
+      "MULTIPLE_FAILED_LOGINS",
+      "BRUTE_FORCE_DETECTED",
     ];
 
     if (criticalEvents.includes(event.type)) {
       // Отправляем уведомление администраторам
       this.notifyAdmins(event);
-      
+
       // Автоматическая блокировка IP при критических событиях
       this.autoBlockIP(event.ip, event.type);
     }
@@ -412,13 +420,13 @@ class SecurityMiddleware {
     try {
       // Отправка email уведомления
       // await EmailService.sendSecurityAlert(event);
-      
+
       // Отправка в Slack/Telegram
       // await NotificationService.sendAlert(event);
-      
-      console.log('📧 Уведомление администраторам отправлено');
+
+      console.log("📧 Уведомление администраторам отправлено");
     } catch (error) {
-      console.error('Ошибка отправки уведомления:', error);
+      console.error("Ошибка отправки уведомления:", error);
     }
   }
 
@@ -426,33 +434,32 @@ class SecurityMiddleware {
   static autoBlockIP(ip, reason) {
     try {
       // Добавляем IP в черный список
-      const blockedIPs = new Set(process.env.BLOCKED_IPS?.split(',') || []);
+      const blockedIPs = new Set(process.env.BLOCKED_IPS?.split(",") || []);
       blockedIPs.add(ip);
-      
+
       console.log(`🚫 IP ${ip} заблокирован за: ${reason}`);
-      
+
       // Сохраняем в базу данных
       // await BlockedIP.create({ ip, reason, blockedAt: new Date() });
-      
     } catch (error) {
-      console.error('Ошибка блокировки IP:', error);
+      console.error("Ошибка блокировки IP:", error);
     }
   }
 
   // Проверка заблокированных IP
   static checkBlockedIP(req, res, next) {
     const clientIP = req.ip || req.connection.remoteAddress;
-    const blockedIPs = process.env.BLOCKED_IPS?.split(',') || [];
-    
+    const blockedIPs = process.env.BLOCKED_IPS?.split(",") || [];
+
     if (blockedIPs.includes(clientIP)) {
-      SecurityMiddleware.logSecurityEvent(req, 'BLOCKED_IP_ACCESS', {
-        blockedIP: clientIP
+      SecurityMiddleware.logSecurityEvent(req, "BLOCKED_IP_ACCESS", {
+        blockedIP: clientIP,
       });
 
       return res.status(403).json({
         success: false,
-        message: 'Доступ заблокирован',
-        code: 'IP_BLOCKED'
+        message: "Доступ заблокирован",
+        code: "IP_BLOCKED",
       });
     }
 
@@ -466,33 +473,35 @@ class SecurityMiddleware {
     return (req, res, next) => {
       const key = `${req.ip}:${req.path}`;
       const now = Date.now();
-      
+
       // Очищаем старые попытки
       if (attempts.has(key)) {
         const userAttempts = attempts.get(key);
-        const filteredAttempts = userAttempts.filter(time => now - time < windowMs);
+        const filteredAttempts = userAttempts.filter(
+          (time) => now - time < windowMs
+        );
         attempts.set(key, filteredAttempts);
       }
 
       const userAttempts = attempts.get(key) || [];
-      
+
       if (userAttempts.length >= maxAttempts) {
-        SecurityMiddleware.logSecurityEvent(req, 'BRUTE_FORCE_DETECTED', {
+        SecurityMiddleware.logSecurityEvent(req, "BRUTE_FORCE_DETECTED", {
           attempts: userAttempts.length,
           window: windowMs,
-          endpoint: req.path
+          endpoint: req.path,
         });
 
         return res.status(429).json({
           success: false,
-          message: 'Слишком много неудачных попыток',
-          code: 'BRUTE_FORCE_DETECTED',
-          retryAfter: Math.ceil(windowMs / 1000)
+          message: "Слишком много неудачных попыток",
+          code: "BRUTE_FORCE_DETECTED",
+          retryAfter: Math.ceil(windowMs / 1000),
         });
       }
 
       // Добавляем текущую попытку после неудачного запроса
-      res.on('finish', () => {
+      res.on("finish", () => {
         if (res.statusCode === 401 || res.statusCode === 403) {
           userAttempts.push(now);
           attempts.set(key, userAttempts);
@@ -510,28 +519,29 @@ class SecurityMiddleware {
   static anomalyDetection(req, res, next) {
     const userSignature = {
       ip: req.ip,
-      userAgent: req.headers['user-agent'],
-      acceptLanguage: req.headers['accept-language'],
-      timestamp: Date.now()
+      userAgent: req.headers["user-agent"],
+      acceptLanguage: req.headers["accept-language"],
+      timestamp: Date.now(),
     };
 
     // Проверяем резкую смену характеристик пользователя
     if (req.user) {
       const userId = req.user.userId;
       const lastSignature = global.userSignatures?.[userId];
-      
+
       if (lastSignature) {
         const timeDiff = userSignature.timestamp - lastSignature.timestamp;
         const locationChanged = userSignature.ip !== lastSignature.ip;
-        const deviceChanged = userSignature.userAgent !== lastSignature.userAgent;
-        
+        const deviceChanged =
+          userSignature.userAgent !== lastSignature.userAgent;
+
         // Подозрительная активность: смена IP и устройства за короткое время
         if (timeDiff < 5 * 60 * 1000 && locationChanged && deviceChanged) {
-          SecurityMiddleware.logSecurityEvent(req, 'SUSPICIOUS_ACTIVITY', {
+          SecurityMiddleware.logSecurityEvent(req, "SUSPICIOUS_ACTIVITY", {
             userId: userId,
             previousSignature: lastSignature,
             currentSignature: userSignature,
-            timeDiff: timeDiff
+            timeDiff: timeDiff,
           });
 
           // Можно требовать дополнительную аутентификацию
@@ -576,7 +586,7 @@ class SecurityMonitor {
     this.events.push({
       ...event,
       id: crypto.randomUUID(),
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     // Немедленный анализ критических событий
@@ -587,39 +597,43 @@ class SecurityMonitor {
 
   analyzeEvents() {
     const recentEvents = this.getRecentEvents(5 * 60 * 1000); // Последние 5 минут
-    
+
     // Анализ паттернов
     this.detectPatterns(recentEvents);
-    
+
     // Анализ аномалий
     this.detectAnomalies(recentEvents);
-    
+
     // Генерация рекомендаций
     this.generateRecommendations(recentEvents);
   }
 
   detectPatterns(events) {
     // Группировка по IP
-    const eventsByIP = this.groupBy(events, 'ip');
-    
+    const eventsByIP = this.groupBy(events, "ip");
+
     for (const [ip, ipEvents] of Object.entries(eventsByIP)) {
       if (ipEvents.length > 20) {
-        this.createAlert('HIGH_ACTIVITY_IP', {
+        this.createAlert("HIGH_ACTIVITY_IP", {
           ip: ip,
           eventCount: ipEvents.length,
-          types: [...new Set(ipEvents.map(e => e.type))]
+          types: [...new Set(ipEvents.map((e) => e.type))],
         });
       }
     }
 
     // Детекция скоординированных атак
-    const suspiciousTypes = ['SQL_INJECTION_ATTEMPT', 'XSS_DETECTED', 'BRUTE_FORCE_DETECTED'];
-    const coordinated = events.filter(e => suspiciousTypes.includes(e.type));
-    
+    const suspiciousTypes = [
+      "SQL_INJECTION_ATTEMPT",
+      "XSS_DETECTED",
+      "BRUTE_FORCE_DETECTED",
+    ];
+    const coordinated = events.filter((e) => suspiciousTypes.includes(e.type));
+
     if (coordinated.length > 5) {
-      this.createAlert('COORDINATED_ATTACK', {
+      this.createAlert("COORDINATED_ATTACK", {
         eventCount: coordinated.length,
-        uniqueIPs: [...new Set(coordinated.map(e => e.ip))].length
+        uniqueIPs: [...new Set(coordinated.map((e) => e.ip))].length,
       });
     }
   }
@@ -627,15 +641,16 @@ class SecurityMonitor {
   detectAnomalies(events) {
     // Анализ необычных временных паттернов
     const hourlyDistribution = this.analyzeTimeDistribution(events);
-    
+
     // Детекция пиков активности
     const maxHourlyEvents = Math.max(...Object.values(hourlyDistribution));
-    const avgHourlyEvents = Object.values(hourlyDistribution).reduce((a, b) => a + b, 0) / 24;
-    
+    const avgHourlyEvents =
+      Object.values(hourlyDistribution).reduce((a, b) => a + b, 0) / 24;
+
     if (maxHourlyEvents > avgHourlyEvents * 3) {
-      this.createAlert('UNUSUAL_ACTIVITY_SPIKE', {
+      this.createAlert("UNUSUAL_ACTIVITY_SPIKE", {
         maxEvents: maxHourlyEvents,
-        averageEvents: avgHourlyEvents
+        averageEvents: avgHourlyEvents,
       });
     }
   }
@@ -644,25 +659,25 @@ class SecurityMonitor {
     const recommendations = [];
 
     // Анализ типов событий
-    const eventTypes = this.groupBy(events, 'type');
-    
-    if (eventTypes['RATE_LIMIT_EXCEEDED']?.length > 10) {
-      recommendations.push('Рассмотрите снижение лимитов запросов');
+    const eventTypes = this.groupBy(events, "type");
+
+    if (eventTypes["RATE_LIMIT_EXCEEDED"]?.length > 10) {
+      recommendations.push("Рассмотрите снижение лимитов запросов");
     }
 
-    if (eventTypes['SQL_INJECTION_ATTEMPT']?.length > 0) {
-      recommendations.push('Усильте валидацию входящих данных');
+    if (eventTypes["SQL_INJECTION_ATTEMPT"]?.length > 0) {
+      recommendations.push("Усильте валидацию входящих данных");
     }
 
     if (recommendations.length > 0) {
-      console.log('📋 Рекомендации по безопасности:', recommendations);
+      console.log("📋 Рекомендации по безопасности:", recommendations);
     }
   }
 
   // Утилиты
   getRecentEvents(timeWindow) {
     const cutoff = Date.now() - timeWindow;
-    return this.events.filter(event => event.timestamp > cutoff);
+    return this.events.filter((event) => event.timestamp > cutoff);
   }
 
   groupBy(array, key) {
@@ -678,7 +693,7 @@ class SecurityMonitor {
     const distribution = {};
     for (let i = 0; i < 24; i++) distribution[i] = 0;
 
-    events.forEach(event => {
+    events.forEach((event) => {
       const hour = new Date(event.timestamp).getHours();
       distribution[hour]++;
     });
@@ -688,20 +703,20 @@ class SecurityMonitor {
 
   isCriticalEvent(event) {
     const criticalTypes = [
-      'SQL_INJECTION_ATTEMPT',
-      'XSS_DETECTED',
-      'BRUTE_FORCE_DETECTED',
-      'BLOCKED_IP_ACCESS'
+      "SQL_INJECTION_ATTEMPT",
+      "XSS_DETECTED",
+      "BRUTE_FORCE_DETECTED",
+      "BLOCKED_IP_ACCESS",
     ];
     return criticalTypes.includes(event.type);
   }
 
   processCriticalEvent(event) {
-    console.log('🚨 Критическое событие безопасности:', event);
-    
+    console.log("🚨 Критическое событие безопасности:", event);
+
     // Немедленные действия
-    this.createAlert('CRITICAL_SECURITY_EVENT', event);
-    
+    this.createAlert("CRITICAL_SECURITY_EVENT", event);
+
     // Автоматические меры противодействия
     this.triggerCountermeasures(event);
   }
@@ -713,11 +728,11 @@ class SecurityMonitor {
       severity: this.getAlertSeverity(type),
       data: data,
       timestamp: Date.now(),
-      status: 'active'
+      status: "active",
     };
 
     this.alerts.push(alert);
-    console.log('⚠️ Создано оповещение:', alert);
+    console.log("⚠️ Создано оповещение:", alert);
 
     // Отправка уведомлений
     this.sendAlert(alert);
@@ -725,12 +740,12 @@ class SecurityMonitor {
 
   getAlertSeverity(type) {
     const severityMap = {
-      'CRITICAL_SECURITY_EVENT': 'critical',
-      'COORDINATED_ATTACK': 'high',
-      'HIGH_ACTIVITY_IP': 'medium',
-      'UNUSUAL_ACTIVITY_SPIKE': 'low'
+      CRITICAL_SECURITY_EVENT: "critical",
+      COORDINATED_ATTACK: "high",
+      HIGH_ACTIVITY_IP: "medium",
+      UNUSUAL_ACTIVITY_SPIKE: "low",
     };
-    return severityMap[type] || 'low';
+    return severityMap[type] || "low";
   }
 
   sendAlert(alert) {
@@ -740,37 +755,37 @@ class SecurityMonitor {
 
   triggerCountermeasures(event) {
     switch (event.type) {
-      case 'BRUTE_FORCE_DETECTED':
+      case "BRUTE_FORCE_DETECTED":
         // Автоматическая блокировка IP
         SecurityMiddleware.autoBlockIP(event.ip, event.type);
         break;
-      
-      case 'SQL_INJECTION_ATTEMPT':
+
+      case "SQL_INJECTION_ATTEMPT":
         // Временная блокировка IP
         SecurityMiddleware.autoBlockIP(event.ip, event.type);
         break;
-      
+
       default:
         break;
     }
   }
 
   cleanupOldEvents() {
-    const cutoff = Date.now() - (24 * 60 * 60 * 1000); // 24 часа
-    this.events = this.events.filter(event => event.timestamp > cutoff);
-    this.alerts = this.alerts.filter(alert => alert.timestamp > cutoff);
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000; // 24 часа
+    this.events = this.events.filter((event) => event.timestamp > cutoff);
+    this.alerts = this.alerts.filter((alert) => alert.timestamp > cutoff);
   }
 
   // API для получения статистики
   getSecurityStats() {
     const recentEvents = this.getRecentEvents(60 * 60 * 1000); // Последний час
-    
+
     return {
       totalEvents: this.events.length,
       recentEvents: recentEvents.length,
-      activeAlerts: this.alerts.filter(a => a.status === 'active').length,
-      eventsByType: this.groupBy(recentEvents, 'type'),
-      severityDistribution: this.groupBy(this.alerts, 'severity')
+      activeAlerts: this.alerts.filter((a) => a.status === "active").length,
+      eventsByType: this.groupBy(recentEvents, "type"),
+      severityDistribution: this.groupBy(this.alerts, "severity"),
     };
   }
 }
@@ -794,16 +809,16 @@ class ClientSecurity {
   initializeSecurityMeasures() {
     // Защита от clickjacking
     this.preventClickjacking();
-    
+
     // Защита от XSS
     this.enableXSSProtection();
-    
+
     // Защита localStorage
     this.secureLocalStorage();
-    
+
     // Детекция Developer Tools
     this.detectDevTools();
-    
+
     // Защита от копирования
     this.preventContentTheft();
   }
@@ -817,9 +832,9 @@ class ClientSecurity {
     }
 
     // Добавляем метатег X-Frame-Options через JavaScript
-    const meta = document.createElement('meta');
-    meta.httpEquiv = 'X-Frame-Options';
-    meta.content = 'DENY';
+    const meta = document.createElement("meta");
+    meta.httpEquiv = "X-Frame-Options";
+    meta.content = "DENY";
     document.head.appendChild(meta);
   }
 
@@ -827,10 +842,10 @@ class ClientSecurity {
   enableXSSProtection() {
     // Санитизация всех входящих данных
     this.sanitizeInputs();
-    
+
     // Защита от eval и подобных функций
     this.preventCodeInjection();
-    
+
     // CSP для inline scripts
     this.enforceCSP();
   }
@@ -838,9 +853,9 @@ class ClientSecurity {
   // Санитизация пользовательского ввода
   sanitizeInputs() {
     // Перехватываем все формы
-    document.addEventListener('submit', (event) => {
+    document.addEventListener("submit", (event) => {
       const form = event.target;
-      if (form.tagName === 'FORM') {
+      if (form.tagName === "FORM") {
         this.sanitizeFormData(form);
       }
     });
@@ -858,14 +873,14 @@ class ClientSecurity {
 
     observer.observe(document.body, {
       childList: true,
-      subtree: true
+      subtree: true,
     });
   }
 
   sanitizeFormData(form) {
-    const inputs = form.querySelectorAll('input, textarea, select');
-    inputs.forEach(input => {
-      if (input.type !== 'password') {
+    const inputs = form.querySelectorAll("input, textarea, select");
+    inputs.forEach((input) => {
+      if (input.type !== "password") {
         input.value = this.sanitizeString(input.value);
       }
     });
@@ -874,11 +889,17 @@ class ClientSecurity {
   sanitizeElement(element) {
     // Удаляем опасные атрибуты
     const dangerousAttributes = [
-      'onload', 'onerror', 'onclick', 'onmouseover',
-      'onfocus', 'onblur', 'onchange', 'onsubmit'
+      "onload",
+      "onerror",
+      "onclick",
+      "onmouseover",
+      "onfocus",
+      "onblur",
+      "onchange",
+      "onsubmit",
     ];
 
-    dangerousAttributes.forEach(attr => {
+    dangerousAttributes.forEach((attr) => {
       if (element.hasAttribute(attr)) {
         element.removeAttribute(attr);
         console.warn(`Удален опасный атрибут: ${attr}`);
@@ -886,19 +907,19 @@ class ClientSecurity {
     });
 
     // Рекурсивная обработка дочерних элементов
-    element.querySelectorAll('*').forEach(child => {
+    element.querySelectorAll("*").forEach((child) => {
       this.sanitizeElement(child);
     });
   }
 
   sanitizeString(str) {
-    if (typeof str !== 'string') return str;
+    if (typeof str !== "string") return str;
 
     return str
-      .replace(/[<>]/g, '') // Удаляем < и >
-      .replace(/javascript:/gi, '') // Удаляем javascript:
-      .replace(/on\w+=/gi, '') // Удаляем event handlers
-      .replace(/eval\(/gi, '') // Удаляем eval
+      .replace(/[<>]/g, "") // Удаляем < и >
+      .replace(/javascript:/gi, "") // Удаляем javascript:
+      .replace(/on\w+=/gi, "") // Удаляем event handlers
+      .replace(/eval\(/gi, "") // Удаляем eval
       .trim();
   }
 
@@ -906,24 +927,24 @@ class ClientSecurity {
   preventCodeInjection() {
     // Переопределяем опасные функции
     const originalEval = window.eval;
-    window.eval = function() {
-      console.warn('Попытка выполнения eval() заблокирована');
-      throw new Error('eval() отключен в целях безопасности');
+    window.eval = function () {
+      console.warn("Попытка выполнения eval() заблокирована");
+      throw new Error("eval() отключен в целях безопасности");
     };
 
     // Защита от Function constructor
     const originalFunction = window.Function;
-    window.Function = function() {
-      console.warn('Попытка создания Function() заблокирована');
-      throw new Error('Function() отключен в целях безопасности');
+    window.Function = function () {
+      console.warn("Попытка создания Function() заблокирована");
+      throw new Error("Function() отключен в целях безопасности");
     };
 
     // Защита от setTimeout/setInterval с строками
     const originalSetTimeout = window.setTimeout;
-    window.setTimeout = function(callback, delay) {
-      if (typeof callback === 'string') {
-        console.warn('setTimeout со строкой заблокирован');
-        throw new Error('setTimeout с строкой отключен');
+    window.setTimeout = function (callback, delay) {
+      if (typeof callback === "string") {
+        console.warn("setTimeout со строкой заблокирован");
+        throw new Error("setTimeout с строкой отключен");
       }
       return originalSetTimeout.call(this, callback, delay);
     };
@@ -931,9 +952,10 @@ class ClientSecurity {
 
   // Принудительное применение CSP
   enforceCSP() {
-    const meta = document.createElement('meta');
-    meta.httpEquiv = 'Content-Security-Policy';
-    meta.content = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';";
+    const meta = document.createElement("meta");
+    meta.httpEquiv = "Content-Security-Policy";
+    meta.content =
+      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';";
     document.head.appendChild(meta);
   }
 
@@ -943,20 +965,20 @@ class ClientSecurity {
     const originalSetItem = localStorage.setItem;
     const originalGetItem = localStorage.getItem;
 
-    localStorage.setItem = function(key, value) {
-      if (key.startsWith('auth_') || key.startsWith('user_')) {
+    localStorage.setItem = function (key, value) {
+      if (key.startsWith("auth_") || key.startsWith("user_")) {
         value = ClientSecurity.encrypt(value);
       }
       return originalSetItem.call(this, key, value);
     };
 
-    localStorage.getItem = function(key) {
+    localStorage.getItem = function (key) {
       let value = originalGetItem.call(this, key);
-      if (value && (key.startsWith('auth_') || key.startsWith('user_'))) {
+      if (value && (key.startsWith("auth_") || key.startsWith("user_"))) {
         try {
           value = ClientSecurity.decrypt(value);
         } catch (error) {
-          console.warn('Ошибка расшифровки данных localStorage');
+          console.warn("Ошибка расшифровки данных localStorage");
           localStorage.removeItem(key);
           return null;
         }
@@ -968,9 +990,11 @@ class ClientSecurity {
   // Простое шифрование для localStorage (не для критичных данных!)
   static encrypt(text) {
     const key = this.getEncryptionKey();
-    let result = '';
+    let result = "";
     for (let i = 0; i < text.length; i++) {
-      result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+      result += String.fromCharCode(
+        text.charCodeAt(i) ^ key.charCodeAt(i % key.length)
+      );
     }
     return btoa(result);
   }
@@ -978,9 +1002,11 @@ class ClientSecurity {
   static decrypt(encryptedText) {
     const key = this.getEncryptionKey();
     const text = atob(encryptedText);
-    let result = '';
+    let result = "";
     for (let i = 0; i < text.length; i++) {
-      result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+      result += String.fromCharCode(
+        text.charCodeAt(i) ^ key.charCodeAt(i % key.length)
+      );
     }
     return result;
   }
@@ -990,10 +1016,10 @@ class ClientSecurity {
     const fingerprint = [
       navigator.userAgent,
       navigator.language,
-      screen.width + 'x' + screen.height,
-      new Date().getTimezoneOffset()
-    ].join('|');
-    
+      screen.width + "x" + screen.height,
+      new Date().getTimezoneOffset(),
+    ].join("|");
+
     return btoa(fingerprint).substring(0, 16);
   }
 
@@ -1001,21 +1027,20 @@ class ClientSecurity {
   detectDevTools() {
     let devtools = {
       open: false,
-      orientation: null
+      orientation: null,
     };
 
     setInterval(() => {
       const threshold = 160;
-      const isOpen = (
+      const isOpen =
         window.outerHeight - window.innerHeight > threshold ||
-        window.outerWidth - window.innerWidth > threshold
-      );
+        window.outerWidth - window.innerWidth > threshold;
 
       if (isOpen !== devtools.open) {
         devtools.open = isOpen;
-        
+
         if (isOpen) {
-          console.warn('🔧 Developer Tools обнаружены');
+          console.warn("🔧 Developer Tools обнаружены");
           this.handleDevToolsDetection();
         }
       }
@@ -1025,12 +1050,14 @@ class ClientSecurity {
   handleDevToolsDetection() {
     // Можно добавить различные реакции на открытие DevTools
     // Например, размытие контента, предупреждение и т.д.
-    
+
     // Простое предупреждение
-    if (!sessionStorage.getItem('devtools_warning_shown')) {
+    if (!sessionStorage.getItem("devtools_warning_shown")) {
       setTimeout(() => {
-        alert('⚠️ Обнаружены инструменты разработчика. Будьте осторожны с выполнением неизвестного кода!');
-        sessionStorage.setItem('devtools_warning_shown', 'true');
+        alert(
+          "⚠️ Обнаружены инструменты разработчика. Будьте осторожны с выполнением неизвестного кода!"
+        );
+        sessionStorage.setItem("devtools_warning_shown", "true");
       }, 1000);
     }
   }
@@ -1038,52 +1065,52 @@ class ClientSecurity {
   // Защита от копирования контента
   preventContentTheft() {
     // Отключение правой кнопки мыши
-    document.addEventListener('contextmenu', (e) => {
+    document.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       return false;
     });
 
     // Отключение горячих клавиш
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener("keydown", (e) => {
       // Ctrl+S (сохранение)
-      if (e.ctrlKey && e.key === 's') {
+      if (e.ctrlKey && e.key === "s") {
         e.preventDefault();
         return false;
       }
-      
+
       // Ctrl+A (выделение всего)
-      if (e.ctrlKey && e.key === 'a') {
+      if (e.ctrlKey && e.key === "a") {
         e.preventDefault();
         return false;
       }
-      
+
       // Ctrl+C (копирование)
-      if (e.ctrlKey && e.key === 'c') {
+      if (e.ctrlKey && e.key === "c") {
         e.preventDefault();
         return false;
       }
-      
+
       // F12 (DevTools)
-      if (e.key === 'F12') {
+      if (e.key === "F12") {
         e.preventDefault();
         return false;
       }
-      
+
       // Ctrl+Shift+I (DevTools)
-      if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+      if (e.ctrlKey && e.shiftKey && e.key === "I") {
         e.preventDefault();
         return false;
       }
     });
 
     // Отключение выделения текста
-    document.addEventListener('selectstart', (e) => {
+    document.addEventListener("selectstart", (e) => {
       e.preventDefault();
       return false;
     });
 
     // Отключение перетаскивания
-    document.addEventListener('dragstart', (e) => {
+    document.addEventListener("dragstart", (e) => {
       e.preventDefault();
       return false;
     });
@@ -1093,10 +1120,10 @@ class ClientSecurity {
   setupEventListeners() {
     // Мониторинг попыток изменения DOM
     this.monitorDOMChanges();
-    
+
     // Мониторинг подозрительной активности
     this.monitorSuspiciousActivity();
-    
+
     // Мониторинг попыток доступа к localStorage
     this.monitorStorageAccess();
   }
@@ -1105,14 +1132,14 @@ class ClientSecurity {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         // Проверяем на подозрительные изменения
-        if (mutation.type === 'childList') {
+        if (mutation.type === "childList") {
           mutation.addedNodes.forEach((node) => {
             if (node.nodeType === Node.ELEMENT_NODE) {
               // Проверяем на вредоносные скрипты
-              if (node.tagName === 'SCRIPT') {
-                const src = node.getAttribute('src');
+              if (node.tagName === "SCRIPT") {
+                const src = node.getAttribute("src");
                 if (src && !this.isAllowedScript(src)) {
-                  console.warn('Подозрительный скрипт обнаружен:', src);
+                  console.warn("Подозрительный скрипт обнаружен:", src);
                   node.remove();
                 }
               }
@@ -1125,35 +1152,35 @@ class ClientSecurity {
     observer.observe(document, {
       childList: true,
       subtree: true,
-      attributes: true
+      attributes: true,
     });
   }
 
   isAllowedScript(src) {
     const allowedDomains = [
       location.origin,
-      'https://cdnjs.cloudflare.com',
-      'https://cdn.jsdelivr.net'
+      "https://cdnjs.cloudflare.com",
+      "https://cdn.jsdelivr.net",
     ];
 
-    return allowedDomains.some(domain => src.startsWith(domain));
+    return allowedDomains.some((domain) => src.startsWith(domain));
   }
 
   monitorSuspiciousActivity() {
     let suspiciousCount = 0;
-    
+
     // Мониторинг быстрых кликов
-    document.addEventListener('click', () => {
+    document.addEventListener("click", () => {
       const now = Date.now();
       if (!this.lastClick) this.lastClick = now;
-      
+
       if (now - this.lastClick < 100) {
         suspiciousCount++;
         if (suspiciousCount > 10) {
-          console.warn('Обнаружена подозрительная активность: быстрые клики');
+          console.warn("Обнаружена подозрительная активность: быстрые клики");
         }
       }
-      
+
       this.lastClick = now;
     });
 
@@ -1164,11 +1191,11 @@ class ClientSecurity {
   }
 
   monitorStorageAccess() {
-    const sensitiveKeys = ['authToken', 'userInfo', 'cartData'];
-    
+    const sensitiveKeys = ["authToken", "userInfo", "cartData"];
+
     // Мониторинг попыток доступа к чувствительным данным
     const originalGetItem = localStorage.getItem;
-    localStorage.getItem = function(key) {
+    localStorage.getItem = function (key) {
       if (sensitiveKeys.includes(key)) {
         console.log(`Доступ к чувствительным данным: ${key}`);
       }
@@ -1186,31 +1213,31 @@ class ClientSecurity {
         code_injection_protection: true,
         storage_encryption: true,
         devtools_detection: true,
-        content_protection: true
+        content_protection: true,
       },
       browser_info: {
         userAgent: navigator.userAgent,
         language: navigator.language,
         cookieEnabled: navigator.cookieEnabled,
-        onLine: navigator.onLine
+        onLine: navigator.onLine,
       },
       page_info: {
         url: location.href,
         referrer: document.referrer,
-        title: document.title
-      }
+        title: document.title,
+      },
     };
   }
 }
 
 // Автоматическая инициализация
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
   window.clientSecurity = new ClientSecurity();
-  console.log('🛡️ Клиентская безопасность инициализирована');
+  console.log("🛡️ Клиентская безопасность инициализирована");
 });
 
 // Экспорт для модулей
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = ClientSecurity;
 }
 ```

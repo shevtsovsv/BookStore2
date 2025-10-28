@@ -11,19 +11,19 @@ graph TB
     U[👤 Пользователь] --> R[📄 Запрос страницы]
     R --> MW[🛡️ Route Guard]
     MW --> AC{🔐 Авторизован?}
-    
+
     AC -->|❌ Нет| LR[🔄 Redirect to Login]
     LR --> LP[📝 Login Page]
-    
+
     AC -->|✅ Да| PC{👮 Проверка прав?}
     PC -->|❌ Нет прав| FP[🚫 403 Forbidden]
     PC -->|✅ Есть права| PP[✅ Protected Page]
-    
+
     PP --> AT[🕐 Auto Token Check]
     AT --> TR{🔄 Token Valid?}
     TR -->|❌ Истек| RE[🔄 Refresh Token]
     TR -->|✅ Действует| CO[📱 Continue Operations]
-    
+
     RE --> RS{✅ Refresh Success?}
     RS -->|❌ Нет| LO[🚪 Logout]
     RS -->|✅ Да| CO
@@ -36,11 +36,10 @@ graph TB
 ```javascript
 // src/middleware/authMiddleware.js
 
-const jwt = require('jsonwebtoken');
-const { User, Role, Permission } = require('../models');
+const jwt = require("jsonwebtoken");
+const { User, Role, Permission } = require("../models");
 
 class AuthMiddleware {
-  
   // Базовая проверка аутентификации
   static async authenticate(req, res, next) {
     try {
@@ -49,42 +48,42 @@ class AuthMiddleware {
       if (!authHeader) {
         return res.status(401).json({
           success: false,
-          message: 'Токен доступа не предоставлен',
-          code: 'NO_TOKEN'
+          message: "Токен доступа не предоставлен",
+          code: "NO_TOKEN",
         });
       }
 
       // Проверка формата токена
-      const token = authHeader.startsWith('Bearer ') 
-        ? authHeader.slice(7) 
+      const token = authHeader.startsWith("Bearer ")
+        ? authHeader.slice(7)
         : authHeader;
 
       if (!token) {
         return res.status(401).json({
           success: false,
-          message: 'Некорректный формат токена',
-          code: 'INVALID_TOKEN_FORMAT'
+          message: "Некорректный формат токена",
+          code: "INVALID_TOKEN_FORMAT",
         });
       }
 
       // Декодирование и проверка токена
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      
+
       // Получение пользователя из базы данных
       const user = await User.findByPk(decoded.userId, {
         include: [
           {
             model: Role,
-            include: [Permission]
-          }
-        ]
+            include: [Permission],
+          },
+        ],
       });
 
       if (!user) {
         return res.status(401).json({
           success: false,
-          message: 'Пользователь не найден',
-          code: 'USER_NOT_FOUND'
+          message: "Пользователь не найден",
+          code: "USER_NOT_FOUND",
         });
       }
 
@@ -92,8 +91,8 @@ class AuthMiddleware {
       if (!user.isActive) {
         return res.status(401).json({
           success: false,
-          message: 'Аккаунт заблокирован',
-          code: 'ACCOUNT_DISABLED'
+          message: "Аккаунт заблокирован",
+          code: "ACCOUNT_DISABLED",
         });
       }
 
@@ -102,43 +101,42 @@ class AuthMiddleware {
       if (user.passwordChangedAt && tokenIssued < user.passwordChangedAt) {
         return res.status(401).json({
           success: false,
-          message: 'Токен недействителен после смены пароля',
-          code: 'PASSWORD_CHANGED'
+          message: "Токен недействителен после смены пароля",
+          code: "PASSWORD_CHANGED",
         });
       }
 
       // Добавление пользователя в request
       req.user = user;
       req.token = token;
-      
+
       // Логирование доступа
       await this.logAccess(req, user);
-      
+
       next();
-
     } catch (error) {
-      if (error.name === 'TokenExpiredError') {
+      if (error.name === "TokenExpiredError") {
         return res.status(401).json({
           success: false,
-          message: 'Токен истек',
-          code: 'TOKEN_EXPIRED',
-          expiredAt: error.expiredAt
+          message: "Токен истек",
+          code: "TOKEN_EXPIRED",
+          expiredAt: error.expiredAt,
         });
       }
 
-      if (error.name === 'JsonWebTokenError') {
+      if (error.name === "JsonWebTokenError") {
         return res.status(401).json({
           success: false,
-          message: 'Недействительный токен',
-          code: 'INVALID_TOKEN'
+          message: "Недействительный токен",
+          code: "INVALID_TOKEN",
         });
       }
 
-      console.error('Ошибка аутентификации:', error);
+      console.error("Ошибка аутентификации:", error);
       return res.status(500).json({
         success: false,
-        message: 'Ошибка проверки аутентификации',
-        code: 'AUTH_ERROR'
+        message: "Ошибка проверки аутентификации",
+        code: "AUTH_ERROR",
       });
     }
   }
@@ -150,34 +148,34 @@ class AuthMiddleware {
         if (!req.user) {
           return res.status(401).json({
             success: false,
-            message: 'Пользователь не аутентифицирован',
-            code: 'NOT_AUTHENTICATED'
+            message: "Пользователь не аутентифицирован",
+            code: "NOT_AUTHENTICATED",
           });
         }
 
         // Получаем роли пользователя
-        const userRoles = req.user.Roles?.map(role => role.name) || [];
-        
+        const userRoles = req.user.Roles?.map((role) => role.name) || [];
+
         // Проверяем наличие необходимых ролей
-        const hasRequiredRole = roles.some(role => userRoles.includes(role));
-        
+        const hasRequiredRole = roles.some((role) => userRoles.includes(role));
+
         if (!hasRequiredRole) {
           return res.status(403).json({
             success: false,
-            message: 'Недостаточно прав доступа',
-            code: 'INSUFFICIENT_PERMISSIONS',
+            message: "Недостаточно прав доступа",
+            code: "INSUFFICIENT_PERMISSIONS",
             required: roles,
-            current: userRoles
+            current: userRoles,
           });
         }
 
         next();
       } catch (error) {
-        console.error('Ошибка проверки роли:', error);
+        console.error("Ошибка проверки роли:", error);
         return res.status(500).json({
           success: false,
-          message: 'Ошибка проверки прав доступа',
-          code: 'AUTHORIZATION_ERROR'
+          message: "Ошибка проверки прав доступа",
+          code: "AUTHORIZATION_ERROR",
         });
       }
     };
@@ -190,17 +188,17 @@ class AuthMiddleware {
         if (!req.user) {
           return res.status(401).json({
             success: false,
-            message: 'Пользователь не аутентифицирован',
-            code: 'NOT_AUTHENTICATED'
+            message: "Пользователь не аутентифицирован",
+            code: "NOT_AUTHENTICATED",
           });
         }
 
         // Собираем все разрешения пользователя
         const userPermissions = [];
         if (req.user.Roles) {
-          req.user.Roles.forEach(role => {
+          req.user.Roles.forEach((role) => {
             if (role.Permissions) {
-              role.Permissions.forEach(permission => {
+              role.Permissions.forEach((permission) => {
                 userPermissions.push(permission.name);
               });
             }
@@ -208,69 +206,72 @@ class AuthMiddleware {
         }
 
         // Проверяем наличие необходимых разрешений
-        const hasRequiredPermissions = permissions.every(permission => 
+        const hasRequiredPermissions = permissions.every((permission) =>
           userPermissions.includes(permission)
         );
 
         if (!hasRequiredPermissions) {
           return res.status(403).json({
             success: false,
-            message: 'Недостаточно разрешений',
-            code: 'INSUFFICIENT_PERMISSIONS',
+            message: "Недостаточно разрешений",
+            code: "INSUFFICIENT_PERMISSIONS",
             required: permissions,
-            current: userPermissions
+            current: userPermissions,
           });
         }
 
         next();
       } catch (error) {
-        console.error('Ошибка проверки разрешений:', error);
+        console.error("Ошибка проверки разрешений:", error);
         return res.status(500).json({
           success: false,
-          message: 'Ошибка проверки разрешений',
-          code: 'PERMISSION_ERROR'
+          message: "Ошибка проверки разрешений",
+          code: "PERMISSION_ERROR",
         });
       }
     };
   }
 
   // Middleware для проверки владельца ресурса
-  static requireOwnership(resourceField = 'userId') {
+  static requireOwnership(resourceField = "userId") {
     return async (req, res, next) => {
       try {
         if (!req.user) {
           return res.status(401).json({
             success: false,
-            message: 'Пользователь не аутентифицирован',
-            code: 'NOT_AUTHENTICATED'
+            message: "Пользователь не аутентифицирован",
+            code: "NOT_AUTHENTICATED",
           });
         }
 
         // Получаем ID ресурса
-        const resourceUserId = req.params[resourceField] || req.body[resourceField];
-        
+        const resourceUserId =
+          req.params[resourceField] || req.body[resourceField];
+
         // Проверяем является ли пользователь владельцем
-        const isOwner = req.user.userId.toString() === resourceUserId?.toString();
-        
+        const isOwner =
+          req.user.userId.toString() === resourceUserId?.toString();
+
         // Проверяем является ли администратором
-        const userRoles = req.user.Roles?.map(role => role.name) || [];
-        const isAdmin = userRoles.includes('admin') || userRoles.includes('moderator');
+        const userRoles = req.user.Roles?.map((role) => role.name) || [];
+        const isAdmin =
+          userRoles.includes("admin") || userRoles.includes("moderator");
 
         if (!isOwner && !isAdmin) {
           return res.status(403).json({
             success: false,
-            message: 'Доступ разрешен только владельцу ресурса',
-            code: 'OWNERSHIP_REQUIRED'
+            message: "Доступ разрешен только владельцу ресурса",
+            code: "OWNERSHIP_REQUIRED",
           });
         }
 
         next();
       } catch (error) {
-        console.error('Ошибка проверки владельца:', error);
+        console.error("Ошибка проверки владельца:", error);
         return res.status(500).json({
           success: false,
-          message: 'Ошибка проверки владельца ресурса',
-          code: 'OWNERSHIP_ERROR'
+          message: "Ошибка проверки владельца ресурса",
+          code: "OWNERSHIP_ERROR",
         });
       }
     };
@@ -279,7 +280,7 @@ class AuthMiddleware {
   // Опциональная аутентификация (для публичных эндпоинтов с дополнительными возможностями)
   static optionalAuthenticate(req, res, next) {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader) {
       req.user = null;
       return next();
@@ -299,25 +300,24 @@ class AuthMiddleware {
     try {
       // Определяем тип операции
       const operation = `${req.method} ${req.path}`;
-      
+
       // Создаем запись в логах (можно отправлять в отдельную таблицу или сервис)
       const logData = {
         userId: user.userId,
         operation: operation,
         ip: req.ip || req.connection.remoteAddress,
-        userAgent: req.headers['user-agent'],
+        userAgent: req.headers["user-agent"],
         timestamp: new Date(),
-        success: true
+        success: true,
       };
 
       // Отправляем в систему логирования
-      console.log('Доступ разрешен:', logData);
-      
+      console.log("Доступ разрешен:", logData);
+
       // Можно добавить запись в базу данных
       // await AccessLog.create(logData);
-      
     } catch (error) {
-      console.error('Ошибка логирования доступа:', error);
+      console.error("Ошибка логирования доступа:", error);
     }
   }
 
@@ -328,11 +328,13 @@ class AuthMiddleware {
     return (req, res, next) => {
       const key = req.ip || req.connection.remoteAddress;
       const now = Date.now();
-      
+
       // Очищаем старые записи
       if (requests.has(key)) {
         const userRequests = requests.get(key);
-        const filteredRequests = userRequests.filter(time => now - time < windowMs);
+        const filteredRequests = userRequests.filter(
+          (time) => now - time < windowMs
+        );
         requests.set(key, filteredRequests);
       }
 
@@ -341,9 +343,9 @@ class AuthMiddleware {
       if (userRequests.length >= maxRequests) {
         return res.status(429).json({
           success: false,
-          message: 'Слишком много запросов',
-          code: 'RATE_LIMIT_EXCEEDED',
-          retryAfter: Math.ceil(windowMs / 1000)
+          message: "Слишком много запросов",
+          code: "RATE_LIMIT_EXCEEDED",
+          retryAfter: Math.ceil(windowMs / 1000),
         });
       }
 
@@ -375,40 +377,37 @@ class RouteGuard {
   initializeGuards() {
     // Определяем защищенные страницы
     this.protectedPages = {
-      '/cart.html': { 
-        requireAuth: true, 
-        roles: ['user', 'admin'] 
+      "/cart.html": {
+        requireAuth: true,
+        roles: ["user", "admin"],
       },
-      '/profile.html': { 
-        requireAuth: true, 
-        roles: ['user', 'admin'] 
+      "/profile.html": {
+        requireAuth: true,
+        roles: ["user", "admin"],
       },
-      '/admin/': { 
-        requireAuth: true, 
-        roles: ['admin'] 
+      "/admin/": {
+        requireAuth: true,
+        roles: ["admin"],
       },
-      '/orders.html': { 
-        requireAuth: true, 
-        roles: ['user', 'admin'] 
-      }
+      "/orders.html": {
+        requireAuth: true,
+        roles: ["user", "admin"],
+      },
     };
 
     // Публичные страницы (доступны без авторизации)
     this.publicPages = [
-      '/',
-      '/index.html',
-      '/login.html',
-      '/register.html',
-      '/catalog.html',
-      '/about.html',
-      '/contacts.html'
+      "/",
+      "/index.html",
+      "/login.html",
+      "/register.html",
+      "/catalog.html",
+      "/about.html",
+      "/contacts.html",
     ];
 
     // Перенаправления для неавторизованных пользователей
-    this.authRedirectPages = [
-      '/login.html',
-      '/register.html'
-    ];
+    this.authRedirectPages = ["/login.html", "/register.html"];
 
     this.checkCurrentPage();
     this.setupNavigationGuards();
@@ -417,9 +416,12 @@ class RouteGuard {
   // Проверка текущей страницы
   checkCurrentPage() {
     const currentPath = window.location.pathname;
-    
+
     // Если пользователь авторизован и находится на странице входа/регистрации
-    if (Auth.isAuthenticated() && this.authRedirectPages.includes(currentPath)) {
+    if (
+      Auth.isAuthenticated() &&
+      this.authRedirectPages.includes(currentPath)
+    ) {
       this.redirectToHome();
       return;
     }
@@ -440,7 +442,7 @@ class RouteGuard {
 
     // Проверка по паттернам (например, /admin/)
     for (const [pattern, config] of Object.entries(this.protectedPages)) {
-      if (pattern.endsWith('/') && path.startsWith(pattern)) {
+      if (pattern.endsWith("/") && path.startsWith(pattern)) {
         return config;
       }
     }
@@ -474,18 +476,18 @@ class RouteGuard {
       return false;
     }
 
-    return requiredRoles.some(role => user.roles.includes(role));
+    return requiredRoles.some((role) => user.roles.includes(role));
   }
 
   // Настройка guards для навигации
   setupNavigationGuards() {
     // Перехват кликов по ссылкам
-    document.addEventListener('click', (event) => {
-      const link = event.target.closest('a');
+    document.addEventListener("click", (event) => {
+      const link = event.target.closest("a");
       if (!link) return;
 
-      const href = link.getAttribute('href');
-      if (!href || href.startsWith('http') || href.startsWith('#')) return;
+      const href = link.getAttribute("href");
+      if (!href || href.startsWith("http") || href.startsWith("#")) return;
 
       const pageConfig = this.getPageConfig(href);
       if (pageConfig && !this.checkPageAccess(pageConfig)) {
@@ -494,7 +496,7 @@ class RouteGuard {
     });
 
     // Перехват изменения URL (для SPA)
-    window.addEventListener('popstate', () => {
+    window.addEventListener("popstate", () => {
       setTimeout(() => this.checkCurrentPage(), 0);
     });
   }
@@ -502,28 +504,31 @@ class RouteGuard {
   // Перенаправление на страницу входа
   redirectToLogin() {
     // Сохраняем текущий URL для возврата после входа
-    sessionStorage.setItem('redirectAfterLogin', window.location.pathname + window.location.search);
-    
-    Notifications.warning('Для доступа к этой странице требуется авторизация');
-    
+    sessionStorage.setItem(
+      "redirectAfterLogin",
+      window.location.pathname + window.location.search
+    );
+
+    Notifications.warning("Для доступа к этой странице требуется авторизация");
+
     setTimeout(() => {
-      window.location.href = '/login.html?required=true';
+      window.location.href = "/login.html?required=true";
     }, 1500);
   }
 
   // Перенаправление на главную страницу
   redirectToHome() {
-    Notifications.info('Вы уже авторизованы');
-    
+    Notifications.info("Вы уже авторизованы");
+
     setTimeout(() => {
-      window.location.href = '/index.html';
+      window.location.href = "/index.html";
     }, 1000);
   }
 
   // Показать сообщение об отказе в доступе
   showAccessDenied() {
     const user = Auth.getCurrentUser();
-    
+
     // Создаем страницу ошибки 403
     document.body.innerHTML = `
       <div class="access-denied-container">
@@ -531,12 +536,20 @@ class RouteGuard {
           <div class="error-icon">🚫</div>
           <h1>Доступ запрещен</h1>
           <p>У вас недостаточно прав для просмотра этой страницы.</p>
-          ${user ? `
+          ${
+            user
+              ? `
             <div class="user-info">
-              <p><strong>Пользователь:</strong> ${user.firstName || user.username}</p>
-              <p><strong>Роли:</strong> ${user.roles?.join(', ') || 'Нет ролей'}</p>
+              <p><strong>Пользователь:</strong> ${
+                user.firstName || user.username
+              }</p>
+              <p><strong>Роли:</strong> ${
+                user.roles?.join(", ") || "Нет ролей"
+              }</p>
             </div>
-          ` : ''}
+          `
+              : ""
+          }
           <div class="actions">
             <button onclick="history.back()" class="btn btn-secondary">
               ← Назад
@@ -544,11 +557,15 @@ class RouteGuard {
             <a href="/index.html" class="btn btn-primary">
               🏠 На главную
             </a>
-            ${!user ? `
+            ${
+              !user
+                ? `
               <a href="/login.html" class="btn btn-success">
                 🔐 Войти
               </a>
-            ` : ''}
+            `
+                : ""
+            }
           </div>
         </div>
       </div>
@@ -560,7 +577,7 @@ class RouteGuard {
 
   // Стили для страницы отказа в доступе
   injectAccessDeniedStyles() {
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
       .access-denied-container {
         min-height: 100vh;
@@ -666,40 +683,42 @@ class RouteGuard {
         }
       }
     `;
-    
+
     document.head.appendChild(style);
   }
 
   // Проверка доступа к API endpoint
-  static async checkApiAccess(endpoint, method = 'GET') {
+  static async checkApiAccess(endpoint, method = "GET") {
     try {
       const token = Auth.getToken();
       if (!token) {
-        throw new Error('Токен не найден');
+        throw new Error("Токен не найден");
       }
 
       const response = await fetch(endpoint, {
         method: method,
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (response.status === 401) {
         Auth.logout();
-        window.location.href = '/login.html?required=true';
+        window.location.href = "/login.html?required=true";
         return false;
       }
 
       if (response.status === 403) {
-        Notifications.error('У вас недостаточно прав для выполнения этого действия');
+        Notifications.error(
+          "У вас недостаточно прав для выполнения этого действия"
+        );
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Ошибка проверки доступа к API:', error);
+      console.error("Ошибка проверки доступа к API:", error);
       return false;
     }
   }
@@ -716,7 +735,7 @@ class RouteGuard {
       const refreshed = await Auth.refreshToken();
       if (!refreshed) {
         Auth.logout();
-        window.location.href = '/login.html?required=true';
+        window.location.href = "/login.html?required=true";
         return false;
       }
     }
@@ -733,8 +752,8 @@ class AuthRequired {
 
     descriptor.value = async function (...args) {
       if (!Auth.isAuthenticated()) {
-        Notifications.error('Требуется авторизация');
-        window.location.href = '/login.html?required=true';
+        Notifications.error("Требуется авторизация");
+        window.location.href = "/login.html?required=true";
         return;
       }
 
@@ -758,13 +777,15 @@ class AuthRequired {
       descriptor.value = async function (...args) {
         const user = Auth.getCurrentUser();
         if (!user || !user.roles) {
-          Notifications.error('Недостаточно прав доступа');
+          Notifications.error("Недостаточно прав доступа");
           return;
         }
 
-        const hasRole = roles.some(role => user.roles.includes(role));
+        const hasRole = roles.some((role) => user.roles.includes(role));
         if (!hasRole) {
-          Notifications.error('У вас недостаточно прав для выполнения этого действия');
+          Notifications.error(
+            "У вас недостаточно прав для выполнения этого действия"
+          );
           return;
         }
 
@@ -777,15 +798,15 @@ class AuthRequired {
 }
 
 // Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
   // Создаем глобальный экземпляр RouteGuard
   window.routeGuard = new RouteGuard();
-  
-  console.log('🛡️ Route Guard инициализирован');
+
+  console.log("🛡️ Route Guard инициализирован");
 });
 
 // Экспорт для модулей
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = { RouteGuard, AuthRequired };
 }
 ```
@@ -797,38 +818,41 @@ if (typeof module !== 'undefined' && module.exports) {
 ```javascript
 // src/routes/protected/cartRoutes.js
 
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const cartController = require('../../controllers/cartController');
-const AuthMiddleware = require('../../middleware/authMiddleware');
+const cartController = require("../../controllers/cartController");
+const AuthMiddleware = require("../../middleware/authMiddleware");
 
 // Все маршруты корзины требуют аутентификации
 router.use(AuthMiddleware.authenticate);
 
 // Получение корзины пользователя
-router.get('/', cartController.getCart);
+router.get("/", cartController.getCart);
 
 // Добавление товара в корзину
-router.post('/items', cartController.addItem);
+router.post("/items", cartController.addItem);
 
 // Обновление количества товара
-router.put('/items/:itemId', 
-  AuthMiddleware.requireOwnership('userId'),
+router.put(
+  "/items/:itemId",
+  AuthMiddleware.requireOwnership("userId"),
   cartController.updateItem
 );
 
 // Удаление товара из корзины
-router.delete('/items/:itemId',
-  AuthMiddleware.requireOwnership('userId'),
+router.delete(
+  "/items/:itemId",
+  AuthMiddleware.requireOwnership("userId"),
   cartController.removeItem
 );
 
 // Очистка корзины
-router.delete('/', cartController.clearCart);
+router.delete("/", cartController.clearCart);
 
 // Оформление заказа (требует дополнительные права)
-router.post('/checkout',
-  AuthMiddleware.requireRole('user', 'premium'),
+router.post(
+  "/checkout",
+  AuthMiddleware.requireRole("user", "premium"),
   cartController.checkout
 );
 
@@ -840,50 +864,57 @@ module.exports = router;
 ```javascript
 // src/routes/admin/adminRoutes.js
 
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const adminController = require('../../controllers/adminController');
-const AuthMiddleware = require('../../middleware/authMiddleware');
+const adminController = require("../../controllers/adminController");
+const AuthMiddleware = require("../../middleware/authMiddleware");
 
 // Все административные маршруты требуют роль admin
 router.use(AuthMiddleware.authenticate);
-router.use(AuthMiddleware.requireRole('admin'));
+router.use(AuthMiddleware.requireRole("admin"));
 
 // Управление пользователями
-router.get('/users', 
-  AuthMiddleware.requirePermission('users.view'),
+router.get(
+  "/users",
+  AuthMiddleware.requirePermission("users.view"),
   adminController.getUsers
 );
 
-router.put('/users/:userId',
-  AuthMiddleware.requirePermission('users.edit'),
+router.put(
+  "/users/:userId",
+  AuthMiddleware.requirePermission("users.edit"),
   adminController.updateUser
 );
 
-router.delete('/users/:userId',
-  AuthMiddleware.requirePermission('users.delete'),
+router.delete(
+  "/users/:userId",
+  AuthMiddleware.requirePermission("users.delete"),
   adminController.deleteUser
 );
 
 // Управление товарами
-router.post('/books',
-  AuthMiddleware.requirePermission('books.create'),
+router.post(
+  "/books",
+  AuthMiddleware.requirePermission("books.create"),
   adminController.createBook
 );
 
-router.put('/books/:bookId',
-  AuthMiddleware.requirePermission('books.edit'),
+router.put(
+  "/books/:bookId",
+  AuthMiddleware.requirePermission("books.edit"),
   adminController.updateBook
 );
 
-router.delete('/books/:bookId',
-  AuthMiddleware.requirePermission('books.delete'),
+router.delete(
+  "/books/:bookId",
+  AuthMiddleware.requirePermission("books.delete"),
   adminController.deleteBook
 );
 
 // Аналитика (только для супер-админов)
-router.get('/analytics',
-  AuthMiddleware.requireRole('superadmin'),
+router.get(
+  "/analytics",
+  AuthMiddleware.requireRole("superadmin"),
   adminController.getAnalytics
 );
 
@@ -897,47 +928,47 @@ module.exports = router;
 ```html
 <!DOCTYPE html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Профиль пользователя - BookStore</title>
-    <link rel="stylesheet" href="../style/main.css">
-    <link rel="stylesheet" href="../style/profile.css">
-</head>
-<body>
+    <link rel="stylesheet" href="../style/main.css" />
+    <link rel="stylesheet" href="../style/profile.css" />
+  </head>
+  <body>
     <!-- Загрузочный экран -->
     <div id="loading-screen" class="loading-screen">
-        <div class="loader"></div>
-        <p>Проверка доступа...</p>
+      <div class="loader"></div>
+      <p>Проверка доступа...</p>
     </div>
 
     <!-- Основной контент (скрыт до проверки авторизации) -->
     <div id="main-content" style="display: none;">
-        <header>
-            <nav class="navbar">
-                <div class="nav-brand">
-                    <a href="../index.html">📚 BookStore</a>
-                </div>
-                <div class="nav-menu">
-                    <a href="../catalog.html">Каталог</a>
-                    <a href="../cart.html" class="nav-cart">
-                        🛒 Корзина <span id="cart-count">0</span>
-                    </a>
-                    <div class="user-menu">
-                        <span id="user-name">Пользователь</span>
-                        <div class="dropdown">
-                            <a href="#" class="active">Профиль</a>
-                            <a href="../orders.html">Заказы</a>
-                            <a href="#" onclick="Auth.logout()">Выйти</a>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-        </header>
+      <header>
+        <nav class="navbar">
+          <div class="nav-brand">
+            <a href="../index.html">📚 BookStore</a>
+          </div>
+          <div class="nav-menu">
+            <a href="../catalog.html">Каталог</a>
+            <a href="../cart.html" class="nav-cart">
+              🛒 Корзина <span id="cart-count">0</span>
+            </a>
+            <div class="user-menu">
+              <span id="user-name">Пользователь</span>
+              <div class="dropdown">
+                <a href="#" class="active">Профиль</a>
+                <a href="../orders.html">Заказы</a>
+                <a href="#" onclick="Auth.logout()">Выйти</a>
+              </div>
+            </div>
+          </div>
+        </nav>
+      </header>
 
-        <main class="profile-main">
-            <!-- Контент профиля -->
-        </main>
+      <main class="profile-main">
+        <!-- Контент профиля -->
+      </main>
     </div>
 
     <!-- Скрипты -->
@@ -947,50 +978,52 @@ module.exports = router;
     <script src="../scripts/profile.js"></script>
 
     <script>
-        // Проверка авторизации при загрузке страницы
-        document.addEventListener('DOMContentLoaded', async function() {
-            const loadingScreen = document.getElementById('loading-screen');
-            const mainContent = document.getElementById('main-content');
+      // Проверка авторизации при загрузке страницы
+      document.addEventListener("DOMContentLoaded", async function () {
+        const loadingScreen = document.getElementById("loading-screen");
+        const mainContent = document.getElementById("main-content");
 
-            try {
-                // Проверяем авторизацию
-                if (!Auth.isAuthenticated()) {
-                    throw new Error('Не авторизован');
-                }
+        try {
+          // Проверяем авторизацию
+          if (!Auth.isAuthenticated()) {
+            throw new Error("Не авторизован");
+          }
 
-                // Проверяем валидность токена
-                const isValid = await RouteGuard.ensureValidToken();
-                if (!isValid) {
-                    throw new Error('Токен недействителен');
-                }
+          // Проверяем валидность токена
+          const isValid = await RouteGuard.ensureValidToken();
+          if (!isValid) {
+            throw new Error("Токен недействителен");
+          }
 
-                // Получаем данные пользователя
-                const user = Auth.getCurrentUser();
-                if (!user) {
-                    throw new Error('Данные пользователя не найдены');
-                }
+          // Получаем данные пользователя
+          const user = Auth.getCurrentUser();
+          if (!user) {
+            throw new Error("Данные пользователя не найдены");
+          }
 
-                // Обновляем интерфейс
-                document.getElementById('user-name').textContent = 
-                    user.firstName || user.username;
+          // Обновляем интерфейс
+          document.getElementById("user-name").textContent =
+            user.firstName || user.username;
 
-                // Показываем контент
-                loadingScreen.style.display = 'none';
-                mainContent.style.display = 'block';
+          // Показываем контент
+          loadingScreen.style.display = "none";
+          mainContent.style.display = "block";
 
-                // Инициализируем функционал профиля
-                ProfileManager.initialize();
+          // Инициализируем функционал профиля
+          ProfileManager.initialize();
+        } catch (error) {
+          console.error("Ошибка загрузки профиля:", error);
 
-            } catch (error) {
-                console.error('Ошибка загрузки профиля:', error);
-                
-                // Перенаправляем на страницу входа
-                sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
-                window.location.href = '../login.html?required=true';
-            }
-        });
+          // Перенаправляем на страницу входа
+          sessionStorage.setItem(
+            "redirectAfterLogin",
+            window.location.pathname
+          );
+          window.location.href = "../login.html?required=true";
+        }
+      });
     </script>
-</body>
+  </body>
 </html>
 ```
 
@@ -1016,14 +1049,18 @@ class TokenRefreshManager {
     }, 5 * 60 * 1000);
 
     // Проверяем при активности пользователя
-    ['click', 'keypress', 'scroll'].forEach(event => {
-      document.addEventListener(event, () => {
-        this.scheduleTokenCheck();
-      }, { passive: true });
+    ["click", "keypress", "scroll"].forEach((event) => {
+      document.addEventListener(
+        event,
+        () => {
+          this.scheduleTokenCheck();
+        },
+        { passive: true }
+      );
     });
 
     // Проверяем при фокусе на окне
-    window.addEventListener('focus', () => {
+    window.addEventListener("focus", () => {
       this.checkAndRefreshToken();
     });
   }
@@ -1083,51 +1120,52 @@ class TokenRefreshManager {
   // Выполнение обновления токена
   async performRefresh() {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = localStorage.getItem("refreshToken");
       if (!refreshToken) {
-        throw new Error('Refresh token не найден');
+        throw new Error("Refresh token не найден");
       }
 
-      const response = await fetch('/api/auth/refresh', {
-        method: 'POST',
+      const response = await fetch("/api/auth/refresh", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ refreshToken })
+        body: JSON.stringify({ refreshToken }),
       });
 
       if (!response.ok) {
-        throw new Error('Ошибка обновления токена');
+        throw new Error("Ошибка обновления токена");
       }
 
       const data = await response.json();
-      
+
       if (data.success && data.token) {
         // Сохраняем новый токен
         Auth.saveToken(data.token);
-        
+
         if (data.refreshToken) {
-          localStorage.setItem('refreshToken', data.refreshToken);
+          localStorage.setItem("refreshToken", data.refreshToken);
         }
 
-        console.log('🔄 Токен успешно обновлен');
+        console.log("🔄 Токен успешно обновлен");
         return true;
       } else {
-        throw new Error('Некорректный ответ сервера');
+        throw new Error("Некорректный ответ сервера");
       }
-
     } catch (error) {
-      console.error('Ошибка обновления токена:', error);
-      
+      console.error("Ошибка обновления токена:", error);
+
       // Если обновление не удалось, выходим из системы
       Auth.logout();
-      
+
       // Показываем уведомление
-      Notifications.warning('Сессия истекла. Пожалуйста, войдите в систему снова.');
-      
+      Notifications.warning(
+        "Сессия истекла. Пожалуйста, войдите в систему снова."
+      );
+
       // Перенаправляем на страницу входа
       setTimeout(() => {
-        window.location.href = '/login.html?session=expired';
+        window.location.href = "/login.html?session=expired";
       }, 2000);
 
       return false;
@@ -1136,7 +1174,7 @@ class TokenRefreshManager {
 }
 
 // Инициализация
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
   if (Auth.isAuthenticated()) {
     window.tokenRefreshManager = new TokenRefreshManager();
   }

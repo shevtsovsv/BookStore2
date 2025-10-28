@@ -37,14 +37,14 @@ const AuthToken = {
   save: (token) => {
     try {
       if (!token) {
-        console.warn('Попытка сохранить пустой токен');
+        console.warn("Попытка сохранить пустой токен");
         return false;
       }
-      localStorage.setItem('authToken', token);
-      console.log('Токен успешно сохранен');
+      localStorage.setItem("authToken", token);
+      console.log("Токен успешно сохранен");
       return true;
     } catch (error) {
-      console.error('Ошибка сохранения токена:', error);
+      console.error("Ошибка сохранения токена:", error);
       return false;
     }
   },
@@ -52,10 +52,10 @@ const AuthToken = {
   // Получение токена из localStorage
   get: () => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem("authToken");
       return token;
     } catch (error) {
-      console.error('Ошибка получения токена:', error);
+      console.error("Ошибка получения токена:", error);
       return null;
     }
   },
@@ -63,11 +63,11 @@ const AuthToken = {
   // Удаление токена
   remove: () => {
     try {
-      localStorage.removeItem('authToken');
-      console.log('Токен удален');
+      localStorage.removeItem("authToken");
+      console.log("Токен удален");
       return true;
     } catch (error) {
-      console.error('Ошибка удаления токена:', error);
+      console.error("Ошибка удаления токена:", error);
       return false;
     }
   },
@@ -76,17 +76,17 @@ const AuthToken = {
   decode: (token) => {
     try {
       if (!token) return null;
-      
-      const parts = token.split('.');
+
+      const parts = token.split(".");
       if (parts.length !== 3) {
-        throw new Error('Неверный формат JWT токена');
+        throw new Error("Неверный формат JWT токена");
       }
 
       const payload = parts[1];
-      const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+      const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
       return JSON.parse(decoded);
     } catch (error) {
-      console.error('Ошибка декодирования токена:', error);
+      console.error("Ошибка декодирования токена:", error);
       return null;
     }
   },
@@ -95,21 +95,21 @@ const AuthToken = {
   isValid: (token) => {
     try {
       if (!token) return false;
-      
+
       const decoded = AuthToken.decode(token);
       if (!decoded || !decoded.exp) return false;
-      
+
       const currentTime = Math.floor(Date.now() / 1000);
       const isExpired = decoded.exp <= currentTime;
-      
+
       if (isExpired) {
-        console.log('Токен истёк');
+        console.log("Токен истёк");
         return false;
       }
-      
+
       return true;
     } catch (error) {
-      console.error('Ошибка валидации токена:', error);
+      console.error("Ошибка валидации токена:", error);
       return false;
     }
   },
@@ -124,10 +124,10 @@ const AuthToken = {
   getTimeToExpire: (token) => {
     const decoded = AuthToken.decode(token);
     if (!decoded) return 0;
-    
+
     const currentTime = Math.floor(Date.now() / 1000);
     return Math.max(0, decoded.exp - currentTime);
-  }
+  },
 };
 
 // =============================================================================
@@ -147,15 +147,17 @@ const Auth = {
     if (!token || !AuthToken.isValid(token)) {
       return null;
     }
-    
+
     const decoded = AuthToken.decode(token);
-    return decoded ? {
-      userId: decoded.userId,
-      username: decoded.username,
-      email: decoded.email,
-      firstName: decoded.firstName,
-      lastName: decoded.lastName
-    } : null;
+    return decoded
+      ? {
+          userId: decoded.userId,
+          username: decoded.username,
+          email: decoded.email,
+          firstName: decoded.firstName,
+          lastName: decoded.lastName,
+        }
+      : null;
   },
 
   // Сохранение данных пользователя после входа
@@ -163,12 +165,12 @@ const Auth = {
     try {
       // Сохраняем токен
       if (!AuthToken.save(token)) {
-        throw new Error('Не удалось сохранить токен');
+        throw new Error("Не удалось сохранить токен");
       }
 
       // Сохраняем дополнительные данные пользователя
       if (userData) {
-        localStorage.setItem('userData', JSON.stringify(userData));
+        localStorage.setItem("userData", JSON.stringify(userData));
       }
 
       // Обновляем интерфейс
@@ -178,7 +180,7 @@ const Auth = {
 
       return true;
     } catch (error) {
-      console.error('Ошибка входа:', error);
+      console.error("Ошибка входа:", error);
       return false;
     }
   },
@@ -188,16 +190,16 @@ const Auth = {
     try {
       // Удаляем токен и данные пользователя
       AuthToken.remove();
-      localStorage.removeItem('userData');
-      
+      localStorage.removeItem("userData");
+
       // Обновляем интерфейс
       Auth.updateNavigation();
       Auth.updateCartIcon();
-      
-      console.log('Пользователь вышел из системы');
+
+      console.log("Пользователь вышел из системы");
       return true;
     } catch (error) {
-      console.error('Ошибка выхода:', error);
+      console.error("Ошибка выхода:", error);
       return false;
     }
   },
@@ -206,21 +208,21 @@ const Auth = {
   updateNavigation: () => {
     try {
       const user = Auth.getCurrentUser();
-      const menu = document.getElementById('main-menu');
-      
+      const menu = document.getElementById("main-menu");
+
       if (!menu) {
-        console.warn('Меню навигации не найдено');
+        console.warn("Меню навигации не найдено");
         return;
       }
 
-      const registerLink = document.getElementById('register-link');
-      const loginLink = document.getElementById('login-link');
+      const registerLink = document.getElementById("register-link");
+      const loginLink = document.getElementById("login-link");
 
       if (user) {
         // Пользователь авторизован - показываем имя и кнопку выхода
         if (registerLink) {
           registerLink.innerHTML = `${user.firstName || user.username}`;
-          registerLink.href = '#';
+          registerLink.href = "#";
           registerLink.onclick = (e) => {
             e.preventDefault();
             Auth.showUserMenu(e);
@@ -228,8 +230,8 @@ const Auth = {
         }
 
         if (loginLink) {
-          loginLink.innerHTML = 'Выход';
-          loginLink.href = '#';
+          loginLink.innerHTML = "Выход";
+          loginLink.href = "#";
           loginLink.onclick = (e) => {
             e.preventDefault();
             Auth.handleLogout();
@@ -238,19 +240,19 @@ const Auth = {
       } else {
         // Пользователь не авторизован - показываем ссылки регистрации и входа
         if (registerLink) {
-          registerLink.innerHTML = 'Регистрация';
-          registerLink.href = 'register.html';
+          registerLink.innerHTML = "Регистрация";
+          registerLink.href = "register.html";
           registerLink.onclick = null;
         }
 
         if (loginLink) {
-          loginLink.innerHTML = 'Вход';
-          loginLink.href = 'login.html';
+          loginLink.innerHTML = "Вход";
+          loginLink.href = "login.html";
           loginLink.onclick = null;
         }
       }
     } catch (error) {
-      console.error('Ошибка обновления навигации:', error);
+      console.error("Ошибка обновления навигации:", error);
     }
   },
 
@@ -260,14 +262,14 @@ const Auth = {
     if (!user) return;
 
     // Удаляем существующее меню
-    const existingMenu = document.querySelector('.user-menu');
+    const existingMenu = document.querySelector(".user-menu");
     if (existingMenu) {
       existingMenu.remove();
     }
 
     // Создаем новое меню
-    const menu = document.createElement('div');
-    menu.className = 'user-menu';
+    const menu = document.createElement("div");
+    menu.className = "user-menu";
     menu.innerHTML = `
       <div class="user-menu-content">
         <p><strong>${user.firstName} ${user.lastName}</strong></p>
@@ -278,19 +280,19 @@ const Auth = {
 
     // Позиционируем меню
     const rect = event.target.getBoundingClientRect();
-    menu.style.position = 'absolute';
-    menu.style.top = (rect.bottom + 5) + 'px';
-    menu.style.right = '20px';
-    menu.style.zIndex = '1000';
+    menu.style.position = "absolute";
+    menu.style.top = rect.bottom + 5 + "px";
+    menu.style.right = "20px";
+    menu.style.zIndex = "1000";
 
     document.body.appendChild(menu);
 
     // Закрываем меню при клике вне его
     setTimeout(() => {
-      document.addEventListener('click', function closeMenu(e) {
+      document.addEventListener("click", function closeMenu(e) {
         if (!menu.contains(e.target)) {
           menu.remove();
-          document.removeEventListener('click', closeMenu);
+          document.removeEventListener("click", closeMenu);
         }
       });
     }, 100);
@@ -298,24 +300,27 @@ const Auth = {
 
   // Обработка выхода
   handleLogout: () => {
-    if (confirm('Вы уверены, что хотите выйти?')) {
+    if (confirm("Вы уверены, что хотите выйти?")) {
       Auth.logout();
-      
+
       // Перенаправляем на главную страницу
-      if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
-        window.location.href = '../index.html';
+      if (
+        window.location.pathname !== "/" &&
+        window.location.pathname !== "/index.html"
+      ) {
+        window.location.href = "../index.html";
       }
     }
   },
 
   // Обновление иконки корзины
   updateCartIcon: () => {
-    const cartLink = document.getElementById('cart-link');
+    const cartLink = document.getElementById("cart-link");
     if (cartLink) {
       if (Auth.isAuthenticated()) {
-        cartLink.style.display = 'inline-flex';
+        cartLink.style.display = "inline-flex";
       } else {
-        cartLink.style.display = 'none';
+        cartLink.style.display = "none";
       }
     }
   },
@@ -324,28 +329,30 @@ const Auth = {
   updateCartCount: async () => {
     try {
       if (!Auth.isAuthenticated()) {
-        const cartCount = document.getElementById('cart-count');
+        const cartCount = document.getElementById("cart-count");
         if (cartCount) {
-          cartCount.classList.add('hidden');
+          cartCount.classList.add("hidden");
         }
         return;
       }
 
-      const response = await Auth.makeAuthenticatedRequest('/api/cart');
+      const response = await Auth.makeAuthenticatedRequest("/api/cart");
       if (response && response.ok) {
         const cartData = await response.json();
-        const totalItems = cartData.items ? cartData.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
-        
-        const cartCount = document.getElementById('cart-count');
+        const totalItems = cartData.items
+          ? cartData.items.reduce((sum, item) => sum + item.quantity, 0)
+          : 0;
+
+        const cartCount = document.getElementById("cart-count");
         if (cartCount) {
           cartCount.textContent = totalItems;
-          cartCount.classList.toggle('hidden', totalItems === 0);
+          cartCount.classList.toggle("hidden", totalItems === 0);
         }
       }
     } catch (error) {
-      console.error('Ошибка обновления счетчика корзины:', error);
+      console.error("Ошибка обновления счетчика корзины:", error);
     }
-  }
+  },
 };
 
 // =============================================================================
@@ -355,38 +362,40 @@ const Auth = {
 // Расширяем объект Auth методами для HTTP запросов
 Auth.makeAuthenticatedRequest = async (url, options = {}) => {
   const token = AuthToken.get();
-  
+
   if (!token || !AuthToken.isValid(token)) {
-    throw new Error('Требуется авторизация');
+    throw new Error("Требуется авторизация");
   }
 
   const authOptions = {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      ...options.headers
-    }
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      ...options.headers,
+    },
   };
 
   try {
     const response = await fetch(url, authOptions);
-    
+
     // Если токен истёк или недействителен
     if (response.status === 401) {
-      console.log('Токен недействителен, выполняем выход');
+      console.log("Токен недействителен, выполняем выход");
       Auth.logout();
-      
+
       // Перенаправляем на страницу входа
-      if (!window.location.pathname.includes('login.html')) {
-        window.location.href = window.location.pathname.includes('html/') ? 'login.html' : 'html/login.html';
+      if (!window.location.pathname.includes("login.html")) {
+        window.location.href = window.location.pathname.includes("html/")
+          ? "login.html"
+          : "html/login.html";
       }
-      throw new Error('Сессия истекла');
+      throw new Error("Сессия истекла");
     }
-    
+
     return response;
   } catch (error) {
-    console.error('Ошибка аутентифицированного запроса:', error);
+    console.error("Ошибка аутентифицированного запроса:", error);
     throw error;
   }
 };
@@ -401,7 +410,7 @@ const FormValidator = {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return {
       isValid: emailRegex.test(email),
-      message: emailRegex.test(email) ? '' : 'Некорректный формат email'
+      message: emailRegex.test(email) ? "" : "Некорректный формат email",
     };
   },
 
@@ -413,23 +422,23 @@ const FormValidator = {
     const hasNumbers = /\d/.test(password);
 
     const errors = [];
-    
+
     if (password.length < minLength) {
       errors.push(`Минимум ${minLength} символов`);
     }
     if (!hasUpperCase) {
-      errors.push('Минимум одна заглавная буква');
+      errors.push("Минимум одна заглавная буква");
     }
     if (!hasLowerCase) {
-      errors.push('Минимум одна строчная буква');
+      errors.push("Минимум одна строчная буква");
     }
     if (!hasNumbers) {
-      errors.push('Минимум одна цифра');
+      errors.push("Минимум одна цифра");
     }
 
     return {
       isValid: errors.length === 0,
-      message: errors.length > 0 ? errors.join(', ') : ''
+      message: errors.length > 0 ? errors.join(", ") : "",
     };
   },
 
@@ -442,27 +451,27 @@ const FormValidator = {
     if (username.length < minLength) {
       return {
         isValid: false,
-        message: `Минимум ${minLength} символа`
+        message: `Минимум ${minLength} символа`,
       };
     }
 
     if (username.length > maxLength) {
       return {
         isValid: false,
-        message: `Максимум ${maxLength} символов`
+        message: `Максимум ${maxLength} символов`,
       };
     }
 
     if (!usernameRegex.test(username)) {
       return {
         isValid: false,
-        message: 'Только латинские буквы, цифры и подчеркивание'
+        message: "Только латинские буквы, цифры и подчеркивание",
       };
     }
 
     return {
       isValid: true,
-      message: ''
+      message: "",
     };
   },
 
@@ -470,9 +479,9 @@ const FormValidator = {
   validatePasswordMatch: (password, confirmPassword) => {
     return {
       isValid: password === confirmPassword,
-      message: password === confirmPassword ? '' : 'Пароли не совпадают'
+      message: password === confirmPassword ? "" : "Пароли не совпадают",
     };
-  }
+  },
 };
 
 // =============================================================================
@@ -480,12 +489,12 @@ const FormValidator = {
 // =============================================================================
 
 const Notifications = {
-  show: (message, type = 'info', duration = 5000) => {
+  show: (message, type = "info", duration = 5000) => {
     // Создаем контейнер для уведомлений если его нет
-    let container = document.getElementById('notification-container');
+    let container = document.getElementById("notification-container");
     if (!container) {
-      container = document.createElement('div');
-      container.id = 'notification-container';
+      container = document.createElement("div");
+      container.id = "notification-container";
       container.style.cssText = `
         position: fixed;
         top: 20px;
@@ -496,16 +505,16 @@ const Notifications = {
     }
 
     // Создаем уведомление
-    const notification = document.createElement('div');
+    const notification = document.createElement("div");
     notification.className = `notification ${type} show`;
     notification.textContent = message;
-    
+
     // Добавляем уведомление
     container.appendChild(notification);
 
     // Автоматически удаляем через указанное время
     setTimeout(() => {
-      notification.classList.remove('show');
+      notification.classList.remove("show");
       setTimeout(() => {
         if (notification.parentNode) {
           notification.parentNode.removeChild(notification);
@@ -514,10 +523,10 @@ const Notifications = {
     }, duration);
   },
 
-  success: (message) => Notifications.show(message, 'success'),
-  error: (message) => Notifications.show(message, 'error'),
-  warning: (message) => Notifications.show(message, 'warning'),
-  info: (message) => Notifications.show(message, 'info')
+  success: (message) => Notifications.show(message, "success"),
+  error: (message) => Notifications.show(message, "error"),
+  warning: (message) => Notifications.show(message, "warning"),
+  info: (message) => Notifications.show(message, "info"),
 };
 
 // =============================================================================
@@ -525,11 +534,11 @@ const Notifications = {
 // =============================================================================
 
 // Автоматическая инициализация при загрузке DOM
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   // Обновляем навигацию
   Auth.updateNavigation();
   Auth.updateCartIcon();
-  
+
   // Обновляем счетчик корзины если пользователь авторизован
   if (Auth.isAuthenticated()) {
     Auth.updateCartCount();
@@ -539,17 +548,17 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(() => {
     const token = AuthToken.get();
     if (token && !AuthToken.isValid(token)) {
-      console.log('Токен истёк, выполняем автоматический выход');
+      console.log("Токен истёк, выполняем автоматический выход");
       Auth.logout();
-      Notifications.warning('Сессия истекла. Пожалуйста, войдите снова.');
+      Notifications.warning("Сессия истекла. Пожалуйста, войдите снова.");
     }
   }, 5 * 60 * 1000); // 5 минут
 
-  console.log('Auth utils загружены и инициализированы');
+  console.log("Auth utils загружены и инициализированы");
 });
 
 // Экспорт для использования в других модулях (если нужно)
-if (typeof module !== 'undefined' && module.exports) {
+if (typeof module !== "undefined" && module.exports) {
   module.exports = { Auth, AuthToken, FormValidator, Notifications };
 }
 ```
@@ -561,47 +570,47 @@ if (typeof module !== 'undefined' && module.exports) {
 ```javascript
 // public/scripts/register.js
 
-document.addEventListener('DOMContentLoaded', function() {
-  const form = document.getElementById('registerForm');
-  const submitBtn = document.getElementById('registerBtn');
-  const btnText = submitBtn.querySelector('.btn-text');
-  const btnLoader = submitBtn.querySelector('.btn-loader');
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("registerForm");
+  const submitBtn = document.getElementById("registerBtn");
+  const btnText = submitBtn.querySelector(".btn-text");
+  const btnLoader = submitBtn.querySelector(".btn-loader");
 
   // Элементы формы
-  const firstNameInput = document.getElementById('firstName');
-  const lastNameInput = document.getElementById('lastName');
-  const emailInput = document.getElementById('email');
-  const usernameInput = document.getElementById('username');
-  const passwordInput = document.getElementById('password');
-  const confirmPasswordInput = document.getElementById('confirmPassword');
+  const firstNameInput = document.getElementById("firstName");
+  const lastNameInput = document.getElementById("lastName");
+  const emailInput = document.getElementById("email");
+  const usernameInput = document.getElementById("username");
+  const passwordInput = document.getElementById("password");
+  const confirmPasswordInput = document.getElementById("confirmPassword");
 
   // Автоматическое создание username из email
-  emailInput.addEventListener('input', function() {
+  emailInput.addEventListener("input", function () {
     if (!usernameInput.value) {
-      const emailPart = this.value.split('@')[0];
-      usernameInput.value = emailPart.replace(/[^a-zA-Z0-9]/g, '');
+      const emailPart = this.value.split("@")[0];
+      usernameInput.value = emailPart.replace(/[^a-zA-Z0-9]/g, "");
     }
   });
 
   // Валидация в реальном времени
-  passwordInput.addEventListener('input', validatePassword);
-  confirmPasswordInput.addEventListener('input', validatePasswordMatch);
-  emailInput.addEventListener('blur', validateEmail);
-  usernameInput.addEventListener('blur', validateUsername);
+  passwordInput.addEventListener("input", validatePassword);
+  confirmPasswordInput.addEventListener("input", validatePasswordMatch);
+  emailInput.addEventListener("blur", validateEmail);
+  usernameInput.addEventListener("blur", validateUsername);
 
   // Обработка отправки формы
-  form.addEventListener('submit', handleSubmit);
+  form.addEventListener("submit", handleSubmit);
 
   // Функция валидации пароля
   function validatePassword() {
     const password = passwordInput.value;
     const validation = FormValidator.validatePassword(password);
-    
+
     // Показываем/скрываем требования к паролю
-    const requirements = document.querySelector('.password-requirements');
+    const requirements = document.querySelector(".password-requirements");
     if (requirements) {
-      const items = requirements.querySelectorAll('li');
-      
+      const items = requirements.querySelectorAll("li");
+
       // Проверяем каждое требование
       const hasMinLength = password.length >= 6;
       const hasUpperCase = /[A-Z]/.test(password);
@@ -609,10 +618,10 @@ document.addEventListener('DOMContentLoaded', function() {
       const hasNumbers = /\d/.test(password);
 
       if (items.length >= 4) {
-        items[0].style.color = hasMinLength ? '#27ae60' : '#e74c3c';
-        items[1].style.color = hasUpperCase ? '#27ae60' : '#e74c3c';
-        items[2].style.color = hasLowerCase ? '#27ae60' : '#e74c3c';
-        items[3].style.color = hasNumbers ? '#27ae60' : '#e74c3c';
+        items[0].style.color = hasMinLength ? "#27ae60" : "#e74c3c";
+        items[1].style.color = hasUpperCase ? "#27ae60" : "#e74c3c";
+        items[2].style.color = hasLowerCase ? "#27ae60" : "#e74c3c";
+        items[3].style.color = hasNumbers ? "#27ae60" : "#e74c3c";
       }
     }
 
@@ -623,10 +632,17 @@ document.addEventListener('DOMContentLoaded', function() {
   function validatePasswordMatch() {
     const password = passwordInput.value;
     const confirmPassword = confirmPasswordInput.value;
-    
+
     if (confirmPassword) {
-      const validation = FormValidator.validatePasswordMatch(password, confirmPassword);
-      setFieldValidation(confirmPasswordInput, validation.isValid, validation.message);
+      const validation = FormValidator.validatePasswordMatch(
+        password,
+        confirmPassword
+      );
+      setFieldValidation(
+        confirmPasswordInput,
+        validation.isValid,
+        validation.message
+      );
     }
   }
 
@@ -650,19 +666,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Установка визуальной валидации поля
   function setFieldValidation(field, isValid, message) {
-    const errorElement = document.getElementById(field.id + '-error');
-    
+    const errorElement = document.getElementById(field.id + "-error");
+
     if (isValid) {
-      field.classList.remove('error');
-      field.classList.add('valid');
+      field.classList.remove("error");
+      field.classList.add("valid");
     } else {
-      field.classList.remove('valid');
-      field.classList.add('error');
+      field.classList.remove("valid");
+      field.classList.add("error");
     }
 
     if (errorElement) {
       errorElement.textContent = message;
-      errorElement.style.display = message ? 'block' : 'none';
+      errorElement.style.display = message ? "block" : "none";
     }
   }
 
@@ -696,7 +712,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Проверяем совпадение паролей
-    if (!FormValidator.validatePasswordMatch(password, confirmPassword).isValid) {
+    if (
+      !FormValidator.validatePasswordMatch(password, confirmPassword).isValid
+    ) {
       return false;
     }
 
@@ -708,7 +726,7 @@ document.addEventListener('DOMContentLoaded', function() {
     event.preventDefault();
 
     if (!isFormValid()) {
-      Notifications.error('Пожалуйста, исправьте ошибки в форме');
+      Notifications.error("Пожалуйста, исправьте ошибки в форме");
       return;
     }
 
@@ -721,53 +739,53 @@ document.addEventListener('DOMContentLoaded', function() {
         firstName: firstNameInput.value.trim(),
         lastName: lastNameInput.value.trim(),
         email: emailInput.value.trim(),
-        username: usernameInput.value.trim() || emailInput.value.split('@')[0].replace(/[^a-zA-Z0-9]/g, ''),
-        password: passwordInput.value
+        username:
+          usernameInput.value.trim() ||
+          emailInput.value.split("@")[0].replace(/[^a-zA-Z0-9]/g, ""),
+        password: passwordInput.value,
       };
 
       // Отправляем запрос на сервер
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       const result = await response.json();
 
       if (response.ok && result.success) {
         // Успешная регистрация
-        Notifications.success('Регистрация прошла успешно!');
+        Notifications.success("Регистрация прошла успешно!");
 
         // Сохраняем токен и данные пользователя
         Auth.login(result.token, result.user);
 
         // Перенаправляем на главную страницу через 2 секунды
         setTimeout(() => {
-          window.location.href = '../index.html';
+          window.location.href = "../index.html";
         }, 2000);
-
       } else {
         // Ошибка регистрации
-        const errorMessage = result.message || 'Ошибка регистрации';
+        const errorMessage = result.message || "Ошибка регистрации";
         Notifications.error(errorMessage);
 
         // Показываем конкретные ошибки валидации
         if (result.errors && Array.isArray(result.errors)) {
-          result.errors.forEach(error => {
-            console.error('Ошибка валидации:', error);
+          result.errors.forEach((error) => {
+            console.error("Ошибка валидации:", error);
           });
         }
       }
-
     } catch (error) {
-      console.error('Ошибка регистрации:', error);
-      
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        Notifications.error('Ошибка подключения к серверу');
+      console.error("Ошибка регистрации:", error);
+
+      if (error.name === "TypeError" && error.message.includes("fetch")) {
+        Notifications.error("Ошибка подключения к серверу");
       } else {
-        Notifications.error('Произошла неожиданная ошибка');
+        Notifications.error("Произошла неожиданная ошибка");
       }
     } finally {
       setLoading(false);
@@ -778,24 +796,24 @@ document.addEventListener('DOMContentLoaded', function() {
   function setLoading(isLoading) {
     if (isLoading) {
       submitBtn.disabled = true;
-      btnText.style.display = 'none';
-      btnLoader.style.display = 'inline';
+      btnText.style.display = "none";
+      btnLoader.style.display = "inline";
     } else {
       submitBtn.disabled = false;
-      btnText.style.display = 'inline';
-      btnLoader.style.display = 'none';
+      btnText.style.display = "inline";
+      btnLoader.style.display = "none";
     }
   }
 
   // Проверяем, авторизован ли уже пользователь
   if (Auth.isAuthenticated()) {
-    Notifications.info('Вы уже авторизованы');
+    Notifications.info("Вы уже авторизованы");
     setTimeout(() => {
-      window.location.href = '../index.html';
+      window.location.href = "../index.html";
     }, 1000);
   }
 
-  console.log('Скрипт регистрации загружен');
+  console.log("Скрипт регистрации загружен");
 });
 ```
 
@@ -806,35 +824,35 @@ document.addEventListener('DOMContentLoaded', function() {
 ```javascript
 // public/scripts/login.js
 
-document.addEventListener('DOMContentLoaded', function() {
-  const form = document.getElementById('loginForm');
-  const submitBtn = document.getElementById('loginBtn');
-  const btnText = submitBtn.querySelector('.btn-text');
-  const btnLoader = submitBtn.querySelector('.btn-loader');
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("loginForm");
+  const submitBtn = document.getElementById("loginBtn");
+  const btnText = submitBtn.querySelector(".btn-text");
+  const btnLoader = submitBtn.querySelector(".btn-loader");
 
   // Элементы формы
-  const loginInput = document.getElementById('login');
-  const passwordInput = document.getElementById('password');
-  const rememberMeCheckbox = document.getElementById('rememberMe');
+  const loginInput = document.getElementById("login");
+  const passwordInput = document.getElementById("password");
+  const rememberMeCheckbox = document.getElementById("rememberMe");
 
   // Обработка отправки формы
-  form.addEventListener('submit', handleSubmit);
+  form.addEventListener("submit", handleSubmit);
 
   // Валидация в реальном времени
-  loginInput.addEventListener('input', clearErrors);
-  passwordInput.addEventListener('input', clearErrors);
+  loginInput.addEventListener("input", clearErrors);
+  passwordInput.addEventListener("input", clearErrors);
 
   // Очистка ошибок при вводе
   function clearErrors() {
-    const errorElements = form.querySelectorAll('.error-message');
-    errorElements.forEach(el => {
-      el.style.display = 'none';
-      el.textContent = '';
+    const errorElements = form.querySelectorAll(".error-message");
+    errorElements.forEach((el) => {
+      el.style.display = "none";
+      el.textContent = "";
     });
 
-    const inputs = form.querySelectorAll('input');
-    inputs.forEach(input => {
-      input.classList.remove('error');
+    const inputs = form.querySelectorAll("input");
+    inputs.forEach((input) => {
+      input.classList.remove("error");
     });
   }
 
@@ -844,12 +862,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const password = passwordInput.value;
 
     if (!login) {
-      setFieldError(loginInput, 'Введите логин или email');
+      setFieldError(loginInput, "Введите логин или email");
       return false;
     }
 
     if (!password) {
-      setFieldError(passwordInput, 'Введите пароль');
+      setFieldError(passwordInput, "Введите пароль");
       return false;
     }
 
@@ -858,12 +876,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Установка ошибки для поля
   function setFieldError(field, message) {
-    field.classList.add('error');
-    
-    const errorElement = document.getElementById(field.id + '-error');
+    field.classList.add("error");
+
+    const errorElement = document.getElementById(field.id + "-error");
     if (errorElement) {
       errorElement.textContent = message;
-      errorElement.style.display = 'block';
+      errorElement.style.display = "block";
     }
   }
 
@@ -882,53 +900,54 @@ document.addEventListener('DOMContentLoaded', function() {
       // Собираем данные формы
       const formData = {
         login: loginInput.value.trim(),
-        password: passwordInput.value
+        password: passwordInput.value,
       };
 
       // Отправляем запрос на сервер
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       const result = await response.json();
 
       if (response.ok && result.success) {
         // Успешный вход
-        Notifications.success(`Добро пожаловать, ${result.user.firstName || result.user.username}!`);
+        Notifications.success(
+          `Добро пожаловать, ${result.user.firstName || result.user.username}!`
+        );
 
         // Сохраняем токен и данные пользователя
         Auth.login(result.token, result.user);
 
         // Получаем URL для перенаправления (если был сохранен)
-        const redirectUrl = sessionStorage.getItem('redirectAfterLogin') || '../index.html';
-        sessionStorage.removeItem('redirectAfterLogin');
+        const redirectUrl =
+          sessionStorage.getItem("redirectAfterLogin") || "../index.html";
+        sessionStorage.removeItem("redirectAfterLogin");
 
         // Перенаправляем через 1 секунду
         setTimeout(() => {
           window.location.href = redirectUrl;
         }, 1000);
-
       } else {
         // Ошибка входа
-        const errorMessage = result.message || 'Ошибка входа в систему';
+        const errorMessage = result.message || "Ошибка входа в систему";
         Notifications.error(errorMessage);
 
         // Фокусируемся на поле пароля для повторного ввода
-        passwordInput.value = '';
+        passwordInput.value = "";
         passwordInput.focus();
       }
-
     } catch (error) {
-      console.error('Ошибка входа:', error);
-      
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        Notifications.error('Ошибка подключения к серверу');
+      console.error("Ошибка входа:", error);
+
+      if (error.name === "TypeError" && error.message.includes("fetch")) {
+        Notifications.error("Ошибка подключения к серверу");
       } else {
-        Notifications.error('Произошла неожиданная ошибка');
+        Notifications.error("Произошла неожиданная ошибка");
       }
     } finally {
       setLoading(false);
@@ -939,24 +958,24 @@ document.addEventListener('DOMContentLoaded', function() {
   function setLoading(isLoading) {
     if (isLoading) {
       submitBtn.disabled = true;
-      btnText.style.display = 'none';
-      btnLoader.style.display = 'inline';
+      btnText.style.display = "none";
+      btnLoader.style.display = "inline";
     } else {
       submitBtn.disabled = false;
-      btnText.style.display = 'inline';
-      btnLoader.style.display = 'none';
+      btnText.style.display = "inline";
+      btnLoader.style.display = "none";
     }
   }
 
   // Проверяем, авторизован ли уже пользователь
   if (Auth.isAuthenticated()) {
-    Notifications.info('Вы уже авторизованы');
+    Notifications.info("Вы уже авторизованы");
     setTimeout(() => {
-      window.location.href = '../index.html';
+      window.location.href = "../index.html";
     }, 1000);
   }
 
-  console.log('Скрипт входа загружен');
+  console.log("Скрипт входа загружен");
 });
 ```
 
@@ -1037,16 +1056,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ```javascript
 // В файле book-catalog.js
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
   // Проверяем авторизацию при загрузке
   if (!Auth.isAuthenticated()) {
     // Скрываем кнопки "Добавить в корзину"
-    const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
-    addToCartButtons.forEach(btn => {
-      btn.textContent = 'Войти для покупки';
+    const addToCartButtons = document.querySelectorAll(".add-to-cart-btn");
+    addToCartButtons.forEach((btn) => {
+      btn.textContent = "Войти для покупки";
       btn.onclick = () => {
-        sessionStorage.setItem('redirectAfterLogin', window.location.href);
-        window.location.href = 'html/login.html';
+        sessionStorage.setItem("redirectAfterLogin", window.location.href);
+        window.location.href = "html/login.html";
       };
     });
   }
