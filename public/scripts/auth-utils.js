@@ -162,13 +162,13 @@ const Auth = {
       // Пользователь не авторизован - показать стандартные ссылки
       if (registerLink) {
         registerLink.textContent = "Регистрация";
-        registerLink.href = "register.html";
+        registerLink.href = "/html/register.html";
         registerLink.onclick = null;
       }
 
       if (loginLink) {
         loginLink.textContent = "Вход";
-        loginLink.href = "login.html";
+        loginLink.href = "/html/login.html";
         loginLink.onclick = null;
       }
     }

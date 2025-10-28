@@ -38,8 +38,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     console.log("Начинаем процесс регистрации...");
 
-    // Очистить предыдущие ошибки
-    FormUtils.clearFormErrors();
+    // Не очищаем ошибки перед валидацией, чтобы не сбрасывать сообщения до проверки
 
     // Собрать данные формы
     const formData = {

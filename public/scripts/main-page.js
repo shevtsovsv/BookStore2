@@ -65,12 +65,13 @@ async function loadStoreStats() {
  * @param {number} index - индекс книги (для класса позиционирования)
  * @returns {HTMLElement} HTML элемент с информацией о книге
  */
+
 function createBookElement(book, index) {
   const bookElement = document.createElement("div");
   bookElement.className = `book-item abs-img img${index + 1}`;
 
   // Формируем ссылку на детальную страницу книги
-  const bookLink = `html/book-detail.html?id=${book.id}`;
+  const bookLink = `/html/book-detail.html?id=${book.id}`;
 
   // Получаем имена авторов
   const authorsNames =
