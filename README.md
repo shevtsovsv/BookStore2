@@ -15,12 +15,14 @@
 ## 🛠 Технологии
 
 ### Frontend
+
 - **HTML5** - семантическая разметка
 - **CSS3** - современные стили, Grid, Flexbox
 - **JavaScript ES6+** - модульная архитектура
 - **Адаптивный дизайн** - Mobile-first подход
 
 ### Backend
+
 - **Node.js** - серверная платформа
 - **Express.js** - веб-фреймворк
 - **Sequelize ORM** - работа с базой данных
@@ -29,6 +31,7 @@
 - **CORS** - поддержка кросс-доменных запросов
 
 ### База данных
+
 - **PostgreSQL** - основная БД
 - **Миграции** - структурированное управление схемой
 - **Сидеры** - начальные данные
@@ -36,22 +39,26 @@
 ## 🚀 Установка и запуск
 
 ### Предварительные требования
+
 - Node.js (версия 14 или выше)
 - PostgreSQL (версия 12 или выше)
 - npm или yarn
 
 ### 1. Клонирование репозитория
+
 ```bash
 git clone https://github.com/ВАШ_USERNAME/BookStore2.git
 cd BookStore2
 ```
 
 ### 2. Установка зависимостей
+
 ```bash
 npm install
 ```
 
 ### 3. Настройка базы данных
+
 ```bash
 # Создайте базу данных PostgreSQL
 createdb bookstore_db
@@ -64,7 +71,9 @@ npx sequelize-cli db:seed:all
 ```
 
 ### 4. Настройка переменных окружения
+
 Создайте файл `.env` в корне проекта:
+
 ```env
 DATABASE_URL=postgresql://username:password@localhost:5432/bookstore_db
 JWT_SECRET=your-super-secret-jwt-key
@@ -73,6 +82,7 @@ PORT=3000
 ```
 
 ### 5. Запуск проекта
+
 ```bash
 # Запуск сервера
 npm start
