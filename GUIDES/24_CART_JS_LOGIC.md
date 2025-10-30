@@ -1,6 +1,7 @@
 # Урок 24. Динамика корзины на JavaScript
 
 В этом уроке реализуем работу корзины с помощью JavaScript:
+
 - Добавление/удаление товаров
 - Изменение количества
 - Пересчёт итоговой суммы
@@ -12,7 +13,7 @@
 let cart = [];
 
 function addToCart(book) {
-  const existing = cart.find(item => item.id === book.id);
+  const existing = cart.find((item) => item.id === book.id);
   if (existing) {
     existing.qty += 1;
   } else {
@@ -22,12 +23,12 @@ function addToCart(book) {
 }
 
 function removeFromCart(bookId) {
-  cart = cart.filter(item => item.id !== bookId);
+  cart = cart.filter((item) => item.id !== bookId);
   renderCart();
 }
 
 function changeQty(bookId, qty) {
-  const item = cart.find(item => item.id === bookId);
+  const item = cart.find((item) => item.id === bookId);
   if (item && qty > 0) {
     item.qty = qty;
     renderCart();
@@ -44,6 +45,7 @@ function renderCart() {
 ```
 
 ## UX-детали
+
 - После каждого действия корзина перерисовывается
 - Итоговая сумма обновляется автоматически
 - При удалении последнего товара отображается сообщение "Корзина пуста"
