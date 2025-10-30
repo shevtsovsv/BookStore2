@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Наш офис — Санкт-Петербург, ул. Книжная, д. 10</title>
+  <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
+  <style>
+    #map {
+      width: 100%;
+      max-width: 800px;
+      height: 450px;
+      margin: 0 auto;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    }
+  </style>
+</head>
+<body>
+  <h2>Наш офис</h2>
+  <p>📍 Санкт-Петербург, ул. Книжная, д. 10</p>
+
+  <div id="map"></div>
+
+  <script>
+    ymaps.ready(init);
+    function init() {
+      // Координаты ул. Книжная, 10
+      const coords = [59.958188, 30.322053];
+
+      // Создание карты
+      const map = new ymaps.Map("map", {
+        center: coords,
+        zoom: 17,
+        controls: ['zoomControl', 'fullscreenControl']
+      });
+
+      // Создание метки
+      const placemark = new ymaps.Placemark(coords, {
+        balloonContentHeader: 'Наш офис',
+        balloonContentBody: 'Санкт-Петербург, ул. Книжная, д. 10',
+        hintContent: 'Наш офис'
+      }, {
+        preset: 'islands#redDotIcon'
+      });
+
+      // Добавление метки и открытие балуна сразу
+      map.geoObjects.add(placemark);
+      placemark.balloon.open();
+    }
+  </script>
+</body>
+</html>
