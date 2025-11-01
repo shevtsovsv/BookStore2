@@ -55,4 +55,12 @@ router.delete("/:id", validateCartItemId, cartController.removeFromCart);
  */
 router.delete("/", cartController.clearCart);
 
+/**
+ * @route   POST /api/cart/checkout
+ * @desc    Оформление заказа
+ * @access  Private
+ */
+const checkoutController = require("../controllers/checkoutController");
+router.post("/checkout", checkoutController.checkout);
+
 module.exports = router;

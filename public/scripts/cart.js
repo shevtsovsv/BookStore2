@@ -249,8 +249,41 @@ async function clearCart() {
 }
 
 /**
- * Оформить заказ (заглушка)
+ * Оформить заказ
  */
-function checkout() {
-  alert("Функция оформления заказа будет добавлена в следующих версиях");
+async function checkout() {
+  if (!confirm("Подтвердите оформление заказа")) {
+    return;
+  }
+
+  try {
+    const token = AuthToken.get();
+    if (!token) {
+      alert("Ошибка авторизации. Пожалуйста, войдите в систему");
+      return;
+    }
+
+    const response = await fetch("/api/cart/checkout", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      alert(
+        `${data.message}\nКуплено товаров: ${data.data.itemsCount}\nОбщее количество: ${data.data.totalQuantity}`
+      );
+      // Перезагрузить корзину (она должна быть пуста)
+      loadCart();
+    } else {
+      alert(`Ошибка оформления заказа: ${data.message}`);
+    }
+  } catch (error) {
+    console.error("Checkout error:", error);
+    alert("Ошибка связи с сервером");
+  }
 }
