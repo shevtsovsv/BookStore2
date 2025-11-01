@@ -326,7 +326,7 @@ h1 {
   margin-top: 0;
 }
 .necessarily {
-	color: red;
+  color: red;
 }
 .form-box {
   display: flex;
@@ -376,34 +376,34 @@ h1 {
   }
 }
 /* добавление глазика  */
- .password-input-wrapper {
-        position: relative;
-        width: 100%;
-      }
-      .password-input-wrapper input[type="password"],
-      .password-input-wrapper input[type="text"] {
-        width: 100%;
-        box-sizing: border-box;
-        padding-right: 40px;
-      }
-      .password-eye-btn {
-        position: absolute;
-        top: 50%;
-        right: 10px;
-        transform: translateY(-50%);
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0;
-        height: 24px;
-        width: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .password-eye-btn svg {
-        pointer-events: none;
-      }
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+.password-input-wrapper input[type="password"],
+.password-input-wrapper input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 40px;
+}
+.password-eye-btn {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  height: 24px;
+  width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.password-eye-btn svg {
+  pointer-events: none;
+}
 
 /* ---------- ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ДЛЯ ФОРМ АУТЕНТИФИКАЦИИ ---------- */
 
