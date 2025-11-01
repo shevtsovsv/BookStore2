@@ -136,7 +136,7 @@
   async function orderBook(bookId) {
     const book = booksData.find((b) => b.id === bookId);
     const bookTitle = book ? book.title : "книга";
-    
+
     try {
       // Проверяем авторизацию
       if (!Auth.isAuthenticated()) {

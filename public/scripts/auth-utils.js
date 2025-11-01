@@ -190,9 +190,11 @@ const Auth = {
     if (this.isAuthenticated()) {
       if (!cartIcon) {
         // Определить правильный путь к корзине
-        const isOnIndexPage = window.location.pathname === "/" || window.location.pathname.endsWith("index.html");
+        const isOnIndexPage =
+          window.location.pathname === "/" ||
+          window.location.pathname.endsWith("index.html");
         const cartUrl = isOnIndexPage ? "html/cart.html" : "cart.html";
-        
+
         // Создать иконку корзины
         cartLi = document.createElement("li");
         cartLi.innerHTML = `
