@@ -868,10 +868,54 @@
   };
 
   /**
-   * Order book handler
+   * Order book handler - добавление в корзину
    */
-  window.orderBook = function (id, title) {
-    alert(`Книга "${title}" добавлена в корзину! (Функция в разработке)`);
+  window.orderBook = async function (id, title) {
+    try {
+      // Проверяем авторизацию
+      if (!Auth.isAuthenticated()) {
+        alert("Для добавления в корзину необходимо войти в систему");
+        return;
+      }
+
+      const token = AuthToken.get();
+      if (!token) {
+        alert("Ошибка авторизации. Пожалуйста, войдите в систему снова");
+        return;
+      }
+
+      const response = await fetch("/api/cart", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          bookId: id,
+          quantity: 1,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(`Книга "${title}" добавлена в корзину!`);
+        // Обновить счётчик корзины в меню
+        if (typeof Auth !== "undefined" && Auth.updateCartCount) {
+          Auth.updateCartCount();
+        }
+      } else {
+        if (response.status === 401) {
+          Auth.logout();
+          alert("Сессия истекла. Пожалуйста, войдите в систему снова");
+        } else {
+          alert(`Ошибка: ${result.message || "Не удалось добавить в корзину"}`);
+        }
+      }
+    } catch (error) {
+      console.error("Ошибка добавления в корзину:", error);
+      alert("Ошибка связи с сервером");
+    }
   };
 
   /**

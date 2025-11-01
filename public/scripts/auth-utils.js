@@ -184,26 +184,33 @@ const Auth = {
 
     // Проверить, есть ли уже иконка корзины
     let cartIcon = menu.querySelector(".cart-icon");
+    let cartLi = cartIcon ? cartIcon.closest("li") : null;
 
-    if (!cartIcon) {
-      // Создать иконку корзины
-      const cartLi = document.createElement("li");
-      cartLi.innerHTML = `
-        <a href="cart.html" class="cart-icon" title="Корзина">
-          <span class="cart-icon-text">🛒</span>
-          <span class="cart-count" id="cart-count">0</span>
-        </a>
-      `;
-      menu.appendChild(cartLi);
-      cartIcon = cartLi.querySelector(".cart-icon");
-    }
-
-    // Обновить счетчик корзины если пользователь авторизован
+    // Если пользователь авторизован
     if (this.isAuthenticated()) {
+      if (!cartIcon) {
+        // Определить правильный путь к корзине
+        const isOnIndexPage = window.location.pathname === "/" || window.location.pathname.endsWith("index.html");
+        const cartUrl = isOnIndexPage ? "html/cart.html" : "cart.html";
+        
+        // Создать иконку корзины
+        cartLi = document.createElement("li");
+        cartLi.innerHTML = `
+          <a href="${cartUrl}" class="cart-icon" title="Корзина">
+            <span class="cart-icon-text">🛒</span>
+            <span class="cart-count" id="cart-count">0</span>
+          </a>
+        `;
+        menu.appendChild(cartLi);
+        cartIcon = cartLi.querySelector(".cart-icon");
+      }
+      // Обновить счетчик корзины
       this.updateCartCount();
     } else {
-      const cartCount = document.getElementById("cart-count");
-      if (cartCount) cartCount.textContent = "0";
+      // Если не авторизован - удалить иконку корзины
+      if (cartLi) {
+        cartLi.remove();
+      }
     }
   },
 

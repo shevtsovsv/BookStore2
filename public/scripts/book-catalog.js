@@ -132,11 +132,56 @@
     }
   }
 
-  // Функция для заказа книги (заглушка)
-  function orderBook(bookId) {
+  // Функция для добавления книги в корзину
+  async function orderBook(bookId) {
     const book = booksData.find((b) => b.id === bookId);
     const bookTitle = book ? book.title : "книга";
-    alert(`"${bookTitle}" добавлена в корзину! (Это демо-функция)`);
+    
+    try {
+      // Проверяем авторизацию
+      if (!Auth.isAuthenticated()) {
+        alert("Для добавления в корзину необходимо войти в систему");
+        return;
+      }
+
+      const token = AuthToken.get();
+      if (!token) {
+        alert("Ошибка авторизации. Пожалуйста, войдите в систему снова");
+        return;
+      }
+
+      const response = await fetch("/api/cart", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          bookId: bookId,
+          quantity: 1,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(`"${bookTitle}" добавлена в корзину!`);
+        // Обновить счётчик корзины в меню
+        if (typeof Auth !== "undefined" && Auth.updateCartCount) {
+          Auth.updateCartCount();
+        }
+      } else {
+        if (response.status === 401) {
+          Auth.logout();
+          alert("Сессия истекла. Пожалуйста, войдите в систему снова");
+        } else {
+          alert(`Ошибка: ${result.message || "Не удалось добавить в корзину"}`);
+        }
+      }
+    } catch (error) {
+      console.error("Ошибка добавления в корзину:", error);
+      alert("Ошибка связи с сервером");
+    }
   }
 
   // Делаем функцию глобальной

@@ -538,6 +538,10 @@ async function addToCart() {
 
     if (response.ok) {
       showSuccess("Книга добавлена в корзину!");
+      // Обновить счётчик корзины в меню
+      if (typeof Auth !== "undefined" && Auth.updateCartCount) {
+        Auth.updateCartCount();
+      }
     } else {
       // Проверяем, не истек ли токен
       if (response.status === 401) {
