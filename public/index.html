@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Интернет-магазин книг</title>
@@ -20,12 +19,7 @@
           </li>
           <li><a href="/html/login.html" id="login-link">Вход</a></li>
           <!-- Будет 00000 заменено на имя пользователя и выход при авторизации -->
-          <li>
-            <a href="html/cart.html" class="cart-icon" id="cart-link">
-              <span class="cart-icon-text">Корзина</span>
-              <span class="cart-count hidden" id="cart-count">0</span>
-            </a>
-          </li>
+          <!-- Корзина добавляется динамически через auth-utils.js -->
         </ul>
       </nav>
     </header>
@@ -95,10 +89,15 @@
         </div>
       </section>
     </main>
-	<footer class="footer">
+    <footer class="footer">
       <div class="footer-contacts">
-        <span><strong>Телефон:</strong> <a href="tel:+79991234567">+7 (999) 123-45-67</a></span>
-        <span><strong>Адрес:</strong> г. Санкт-Петербург, ул. Книжная, д. 10</span>
+        <span
+          ><strong>Телефон:</strong>
+          <a href="tel:+79991234567">+7 (999) 123-45-67</a></span
+        >
+        <span
+          ><strong>Адрес:</strong> г. Санкт-Петербург, ул. Книжная, д. 10</span
+        >
         <span><strong>Слоган:</strong> «Книга — лучший подарок!»</span>
       </div>
     </footer>
