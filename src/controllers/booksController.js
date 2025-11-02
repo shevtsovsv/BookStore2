@@ -238,7 +238,15 @@ const getBookById = async (req, res) => {
         {
           model: Publisher,
           as: "publisher",
-          attributes: ["id", "name", "country", "website"],
+          attributes: [
+            "id",
+            "name",
+            "country",
+            "website",
+            "description",
+            "founded_year",
+            "contact_email",
+          ],
         },
         {
           model: Author,

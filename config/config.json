@@ -5,22 +5,25 @@
     "database": "bookstore",
     "host": "localhost",
     "port": 5432,
-    "dialect": "postgres"
+    "dialect": "postgres",
+    "use_env_variable": false
   },
   "test": {
     "username": "user",
     "password": "1234",
-    "database": "bookstore",
+    "database": "bookstore_test",
     "host": "localhost",
     "port": 5432,
     "dialect": "postgres"
   },
   "production": {
-    "username": "user",
-    "password": "1234",
-    "database": "bookstore",
-    "host": "localhost",
-    "port": 5432,
-    "dialect": "postgres"
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
   }
 }

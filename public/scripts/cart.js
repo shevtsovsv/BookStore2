@@ -176,7 +176,7 @@ async function updateQuantity(itemId, newQuantity) {
     }
   } catch (error) {
     console.error("Ошибка обновления количества:", error);
-    alert("Ошибка обновления количества");
+    showNotification("Ошибка обновления количества", "error");
   }
 }
 
@@ -184,8 +184,6 @@ async function updateQuantity(itemId, newQuantity) {
  * Удалить товар из корзины
  */
 async function removeFromCart(itemId) {
-  if (!confirm("Удалить товар из корзины?")) return;
-
   try {
     const token = AuthToken.get();
     const response = await fetch(`/api/cart/${itemId}`, {
@@ -197,6 +195,7 @@ async function removeFromCart(itemId) {
     });
 
     if (response.ok) {
+      showNotification("Товар удалён из корзины", "success");
       loadCart(); // Перезагрузить корзину
       Auth.updateCartCount(); // Обновить счетчик в навигации
     } else {
@@ -204,7 +203,7 @@ async function removeFromCart(itemId) {
     }
   } catch (error) {
     console.error("Ошибка удаления товара:", error);
-    alert("Ошибка удаления товара");
+    showNotification("Ошибка удаления товара", "error");
   }
 }
 
@@ -212,8 +211,6 @@ async function removeFromCart(itemId) {
  * Очистить корзину
  */
 async function clearCart() {
-  if (!confirm("Очистить всю корзину?")) return;
-
   try {
     const token = AuthToken.get();
 
@@ -239,28 +236,37 @@ async function clearCart() {
         });
       }
 
+      showNotification("Корзина очищена", "success");
       showEmptyCart();
       Auth.updateCartCount(); // Обновить счетчик в навигации
     }
   } catch (error) {
     console.error("Ошибка очистки корзины:", error);
-    alert("Ошибка очистки корзины");
+    showNotification("Ошибка очистки корзины", "error");
   }
 }
 
 /**
  * Оформить заказ
  */
-async function checkout() {
-  if (!confirm("Подтвердите оформление заказа")) {
-    return;
-  }
-
+async function checkout(event) {
   try {
     const token = AuthToken.get();
     if (!token) {
-      alert("Ошибка авторизации. Пожалуйста, войдите в систему");
+      showNotification(
+        "Ошибка авторизации. Пожалуйста, войдите в систему",
+        "error"
+      );
       return;
+    }
+
+    // Показать индикатор загрузки
+    const checkoutBtn =
+      event?.target || document.querySelector(".cart-actions .btn-primary");
+    if (checkoutBtn) {
+      const originalText = checkoutBtn.textContent;
+      checkoutBtn.disabled = true;
+      checkoutBtn.textContent = "Оформление...";
     }
 
     const response = await fetch("/api/cart/checkout", {
@@ -274,16 +280,60 @@ async function checkout() {
     const data = await response.json();
 
     if (data.success) {
-      alert(
-        `${data.message}\nКуплено товаров: ${data.data.itemsCount}\nОбщее количество: ${data.data.totalQuantity}`
+      showNotification(
+        `Заказ успешно оформлен! Куплено ${data.data.itemsCount} позиций (${data.data.totalQuantity} шт.)`,
+        "success"
       );
       // Перезагрузить корзину (она должна быть пуста)
-      loadCart();
+      setTimeout(() => {
+        loadCart();
+        Auth.updateCartCount();
+      }, 1500);
     } else {
-      alert(`Ошибка оформления заказа: ${data.message}`);
+      showNotification(`Ошибка: ${data.message}`, "error");
+      if (checkoutBtn) {
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = "Оформить заказ";
+      }
     }
   } catch (error) {
     console.error("Checkout error:", error);
-    alert("Ошибка связи с сервером");
+    showNotification("Ошибка связи с сервером", "error");
+    const checkoutBtn =
+      event?.target || document.querySelector(".cart-actions .btn-primary");
+    if (checkoutBtn) {
+      checkoutBtn.disabled = false;
+      checkoutBtn.textContent = "Оформить заказ";
+    }
   }
+}
+
+/**
+ * Показать уведомление
+ */
+function showNotification(message, type = "info") {
+  // Удалить предыдущие уведомления
+  const existing = document.querySelector(".notification");
+  if (existing) {
+    existing.remove();
+  }
+
+  const notification = document.createElement("div");
+  notification.className = `notification notification-${type}`;
+  notification.textContent = message;
+
+  document.body.appendChild(notification);
+
+  // Показать уведомление с анимацией
+  setTimeout(() => {
+    notification.classList.add("show");
+  }, 10);
+
+  // Скрыть через 3 секунды
+  setTimeout(() => {
+    notification.classList.remove("show");
+    setTimeout(() => {
+      notification.remove();
+    }, 300);
+  }, 3000);
 }

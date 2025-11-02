@@ -75,13 +75,15 @@ module.exports = (sequelize) => {
         // Хэшируем пароль перед сохранением
         beforeCreate: async (user) => {
           if (user.password) {
-            const salt = await bcryptjs.genSalt(12);
+            const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
+            const salt = await bcryptjs.genSalt(saltRounds);
             user.password = await bcryptjs.hash(user.password, salt);
           }
         },
         beforeUpdate: async (user) => {
           if (user.changed("password")) {
-            const salt = await bcryptjs.genSalt(12);
+            const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12;
+            const salt = await bcryptjs.genSalt(saltRounds);
             user.password = await bcryptjs.hash(user.password, salt);
           }
         },

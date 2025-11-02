@@ -100,7 +100,7 @@ header {
 
 .container {
   max-width: 1400px;
-  width: 80vw;
+  width: 65vw;
   margin: 20px auto;
   padding: 20px;
 }
@@ -2410,4 +2410,49 @@ h1 {
 
 .footer-contacts a:hover {
   color: #f39c12;
+}
+
+/* --- Уведомления --- */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 16px;
+  font-weight: 500;
+  z-index: 10000;
+  opacity: 0;
+  transform: translateX(400px);
+  transition: all 0.3s ease-in-out;
+  max-width: 400px;
+}
+
+.notification.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.notification-success {
+  background: #10b981;
+  color: white;
+}
+
+.notification-error {
+  background: #ef4444;
+  color: white;
+}
+
+.notification-info {
+  background: #3b82f6;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .notification {
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
 }

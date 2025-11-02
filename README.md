@@ -59,29 +59,68 @@ npm install
 
 ### 3. Настройка базы данных
 
+Создайте базу данных PostgreSQL:
+
 ```bash
-# Создайте базу данных PostgreSQL
-createdb bookstore_db
+# Через psql
+createdb bookstore
 
-# Выполните миграции
-npx sequelize-cli db:migrate
-
-# Загрузите начальные данные
-npx sequelize-cli db:seed:all
+# Или через SQL
+psql -U postgres
+CREATE DATABASE bookstore;
+\q
 ```
 
 ### 4. Настройка переменных окружения
 
-Создайте файл `.env` в корне проекта:
+**Важно!** Создайте файл `.env` на основе шаблона:
 
-```env
-DATABASE_URL=postgresql://username:password@localhost:5432/bookstore_db
-JWT_SECRET=your-super-secret-jwt-key
-NODE_ENV=development
-PORT=3000
+```bash
+# Windows PowerShell
+copy .env.example .env
+
+# Linux/Mac
+cp .env.example .env
 ```
 
-### 5. Запуск проекта
+Откройте `.env` и настройте переменные:
+
+```properties
+NODE_ENV=development
+PORT=3000
+JWT_SECRET=your-unique-secret-key-change-this
+JWT_EXPIRES_IN=7d
+
+# База данных PostgreSQL
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=bookstore
+DB_USER=postgres
+DB_PASSWORD=your-password
+
+BCRYPT_SALT_ROUNDS=12
+CORS_ORIGIN=http://localhost:3000
+```
+
+📖 **Подробная документация**: [GUIDES/27_ENVIRONMENT_VARIABLES.md](GUIDES/27_ENVIRONMENT_VARIABLES.md)
+
+### 5. Применение миграций и заполнение данными
+
+```bash
+# Выполните миграции
+npx sequelize-cli db:migrate
+
+# Или через npm скрипт
+npm run db:migrate
+
+# Загрузите начальные данные
+npx sequelize-cli db:seed:all
+
+# Или через npm скрипт
+npm run db:seed
+```
+
+### 6. Запуск проекта
 
 ```bash
 # Запуск сервера
@@ -95,8 +134,10 @@ npm run dev
 
 ## 📚 Пошаговая документация
 
-Проект разбит на последовательные шаги с подробной документацией:
+Проект содержит подробные руководства:
 
+- **[00_PROJECT_CREATION_GUIDE.md](GUIDES/00_PROJECT_CREATION_GUIDE.md)** - Полное пошаговое руководство по созданию проекта с нуля
+- **[27_ENVIRONMENT_VARIABLES.md](GUIDES/27_ENVIRONMENT_VARIABLES.md)** - Настройка переменных окружения (.env файл)
 - **[Шаг 1: Инициализация проекта](step1.md)** - Настройка Node.js, установка зависимостей, создание миграций и моделей
 - **[Шаг 2: Создание и заполнение БД](step2.md)** - Создание базы данных, применение миграций, заполнение тестовыми данными
 - **[Шаг 3: Разработка API endpoints](step3.md)** _(в разработке)_ - Создание API маршрутов для аутентификации, книг и корзины
