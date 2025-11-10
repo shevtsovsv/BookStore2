@@ -3,6 +3,7 @@
 > Сложность: 🟡 Средняя
 
 ## Цель
+
 Опишем настройку JWT аутентификации для DRF с использованием `djangorestframework-simplejwt` в BookStore проекте.
 
 ## Установка
@@ -28,7 +29,7 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
-    
+
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
@@ -118,20 +119,20 @@ from rest_framework import permissions
 
 class CartItemViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         return CartItem.objects.filter(user=self.request.user)
 
 class BookViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    
+
     def get_permissions(self):
         """Только админы могут создавать/изменять книги"""
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
         else:
             permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-        
+
         return [permission() for permission in permission_classes]
 ```
 
@@ -140,4 +141,4 @@ class BookViewSet(viewsets.ModelViewSet):
 - Добавьте email/SMS подтверждение для действий с оплатой.
 - Минимизируйте срок жизни access token и используйте refresh + blacklist.
 
-*Конец 09_AUTHENTICATION.md*
+_Конец 09_AUTHENTICATION.md_

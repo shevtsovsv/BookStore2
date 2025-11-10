@@ -3,6 +3,7 @@
 > Сложность: 🟡 Средняя
 
 ## Цель
+
 Показать, как правильно использовать `Serializer` и `ModelSerializer`, реализовать валидацию, nested сериализаторы и оптимизации для чтения/записи.
 
 ## ModelSerializer — базовый пример (BookStore модели)
@@ -15,24 +16,24 @@ from .models import Book, Author, Category, Publisher, User, CartItem
 class AuthorSerializer(serializers.ModelSerializer):
     """Сериализатор для авторов книг"""
     books_count = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Author
         fields = ('id', 'name', 'biography', 'birth_date', 'death_date', 'nationality', 'books_count')
         read_only_fields = ('id',)
-    
+
     def get_books_count(self, obj):
         return obj.books.filter(is_active=True).count()
 
 class CategorySerializer(serializers.ModelSerializer):
     """Сериализатор для категорий книг"""
     books_count = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = Category
         fields = ('id', 'name', 'description', 'slug', 'books_count')
         read_only_fields = ('id',)
-    
+
     def get_books_count(self, obj):
         return obj.books.filter(is_active=True).count()
 
@@ -48,22 +49,22 @@ class BookSerializer(serializers.ModelSerializer):
     authors = AuthorSerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
     publisher = PublisherSerializer(read_only=True)
-    
+
     # Поля для записи (только ID)
     author_ids = serializers.PrimaryKeyRelatedField(
-        queryset=Author.objects.all(), 
-        many=True, 
-        write_only=True, 
+        queryset=Author.objects.all(),
+        many=True,
+        write_only=True,
         source='authors'
     )
     category_id = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(), 
-        write_only=True, 
+        queryset=Category.objects.all(),
+        write_only=True,
         source='category'
     )
     publisher_id = serializers.PrimaryKeyRelatedField(
-        queryset=Publisher.objects.all(), 
-        write_only=True, 
+        queryset=Publisher.objects.all(),
+        write_only=True,
         source='publisher',
         required=False,
         allow_null=True
@@ -92,16 +93,16 @@ class BookSerializer(serializers.ModelSerializer):
 class BookCreateUpdateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания и обновления книг BookStore"""
     author_ids = serializers.PrimaryKeyRelatedField(
-        queryset=Author.objects.all(), 
-        many=True, 
+        queryset=Author.objects.all(),
+        many=True,
         write_only=True
     )
 
     class Meta:
         model = Book
         fields = (
-            'title', 'subtitle', 'description', 'isbn', 'price', 
-            'stock_quantity', 'published_year', 'page_count', 
+            'title', 'subtitle', 'description', 'isbn', 'price',
+            'stock_quantity', 'published_year', 'page_count',
             'language', 'format', 'category', 'publisher', 'author_ids'
         )
 
@@ -110,19 +111,19 @@ class BookCreateUpdateSerializer(serializers.ModelSerializer):
         book = Book.objects.create(**validated_data)
         book.authors.set(author_ids)
         return book
-    
+
     def update(self, instance, validated_data):
         author_ids = validated_data.pop('author_ids', None)
-        
+
         # Обновляем остальные поля
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
-        
+
         # Обновляем авторов если переданы
         if author_ids is not None:
             instance.authors.set(author_ids)
-            
+
         return instance
 ```
 
@@ -140,13 +141,13 @@ class BookSerializer(serializers.ModelSerializer):
         if value > 100000:  # максимальная цена 100,000
             raise serializers.ValidationError("Цена не может превышать 100,000")
         return value
-    
+
     def validate_isbn(self, value):
         """Валидация ISBN"""
         if value and not value.replace('-', '').isdigit():
             raise serializers.ValidationError("ISBN должен содержать только цифры и дефисы")
         return value
-    
+
     def validate_stock_quantity(self, value):
         """Валидация количества на складе"""
         if value < 0:
@@ -160,13 +161,13 @@ class BookSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'published_year': 'Год публикации не может быть в будущем'
             })
-        
+
         # Проверяем соответствие формата и веса
         if attrs.get('format') == 'ebook' and attrs.get('weight', 0) > 0:
             raise serializers.ValidationError({
                 'weight': 'Электронная книга не может иметь физический вес'
             })
-            
+
         return attrs
 ```
 
@@ -176,8 +177,9 @@ class BookSerializer(serializers.ModelSerializer):
 - Для полей, требующих вычислений, используйте `SerializerMethodField` только при необходимости.
 
 ## Полезные приёмы
+
 - `read_only_fields` для полей, которые нельзя менять
 - `extra_kwargs = {'password': {'write_only': True}}` для защиты
 - `to_representation` для кастомной сериализации
 
-*Конец 07_SERIALIZERS.md*
+_Конец 07_SERIALIZERS.md_

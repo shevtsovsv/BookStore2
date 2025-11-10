@@ -3,6 +3,7 @@
 > Сложность: 🟡 Средняя
 
 ## Цель
+
 Показать конфигурацию фильтрации (django-filter), поиска и пагинации для удобного BookStore API.
 
 ## Установка
@@ -35,25 +36,25 @@ from .models import Book, Category, Author
 
 class BookFilter(django_filters.FilterSet):
     """Комплексная фильтрация книг в BookStore"""
-    
+
     # Фильтрация по диапазону цен
     min_price = django_filters.NumberFilter(field_name='price', lookup_expr='gte')
     max_price = django_filters.NumberFilter(field_name='price', lookup_expr='lte')
-    
+
     # Фильтрация по годам издания
     published_after = django_filters.NumberFilter(field_name='published_year', lookup_expr='gte')
     published_before = django_filters.NumberFilter(field_name='published_year', lookup_expr='lte')
-    
+
     # Поиск по автору
     author = django_filters.CharFilter(field_name='authors__first_name', lookup_expr='icontains')
     author_last = django_filters.CharFilter(field_name='authors__last_name', lookup_expr='icontains')
-    
+
     # Фильтрация по наличию на складе
     in_stock = django_filters.BooleanFilter(method='filter_in_stock')
-    
+
     # Фильтрация по рейтингу
     min_rating = django_filters.NumberFilter(field_name='rating', lookup_expr='gte')
-    
+
     # Специальные фильтры
     featured = django_filters.BooleanFilter(field_name='is_featured')
     new_releases = django_filters.BooleanFilter(method='filter_new_releases')
@@ -61,13 +62,13 @@ class BookFilter(django_filters.FilterSet):
     class Meta:
         model = Book
         fields = ['min_price', 'max_price', 'author', 'category', 'publisher', 'language']
-    
+
     def filter_in_stock(self, queryset, name, value):
         """Фильтр для книг в наличии"""
         if value:
             return queryset.filter(stock_quantity__gt=0)
         return queryset.filter(stock_quantity=0)
-    
+
     def filter_new_releases(self, queryset, name, value):
         """Фильтр для новинок (книги за последний год)"""
         if value:
@@ -92,10 +93,10 @@ class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.select_related('category', 'publisher').prefetch_related('authors')
     serializer_class = BookSerializer
     filterset_class = BookFilter
-    
+
     # Поля для полнотекстового поиска
     search_fields = ['title', 'subtitle', 'description', 'isbn', 'authors__first_name', 'authors__last_name']
-    
+
     # Поля для сортировки
     ordering_fields = ['price', 'title', 'published_year', 'rating', 'created_at', 'popularity']
     ordering = ['-created_at']  # По умолчанию сортировка по дате создания
@@ -128,7 +129,7 @@ class BookStorePagination(PageNumberPagination):
     page_size = 20
     page_size_query_param = 'page_size'
     max_page_size = 100
-    
+
     def get_paginated_response(self, data):
         return Response({
             'links': {
@@ -160,4 +161,4 @@ class BookViewSet(viewsets.ModelViewSet):
 - Для heavy queries используйте кэширование (redis) и prefetch/select_related.
 - Для API поиска рассматривайте интеграцию с Elasticsearch/Meilisearch.
 
-*Конец 10_FILTERING_PAGINATION.md*
+_Конец 10_FILTERING_PAGINATION.md_

@@ -3,6 +3,7 @@
 > Сложность: 🟡 Средняя
 
 ## Цель
+
 Кратко показать, как подключить и настроить Django REST Framework (DRF) в проекте книжного магазина: установка, настройки, базовые представления и сериализация.
 
 ## Установка
@@ -66,16 +67,16 @@ class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.filter(is_active=True).select_related(
         'category', 'publisher'
     ).prefetch_related('authors')
-    
+
     serializer_class = BookSerializer
-    
+
     # Фильтрация
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['category', 'publisher', 'language']
-    
+
     # Поиск
     search_fields = ['title', 'subtitle', 'description', 'isbn']
-    
+
     # Сортировка
     ordering_fields = ['price', 'created_at', 'title', 'published_year']
     ordering = ['-created_at']
@@ -106,15 +107,17 @@ urlpatterns = [
 ```
 
 ## Дополнительно
+
 - Логику аутентификации и авторизации см. в `09_AUTHENTICATION.md`.
 - Для сложных сериализаций используйте `SerializerMethodField` и nested serializers.
 
 ---
 
 ## Контрольный список
+
 - [ ] DRF установлен
 - [ ] REST_FRAMEWORK настроен
 - [ ] Простейшие ViewSet'ы зарегистрированы
 - [ ] Фильтрация и пагинация работают
 
-*Конец 06_DRF_SETUP.md*
+_Конец 06_DRF_SETUP.md_

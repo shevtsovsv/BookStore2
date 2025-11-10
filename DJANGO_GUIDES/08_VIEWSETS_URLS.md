@@ -3,6 +3,7 @@
 > Сложность: 🟡 Средняя
 
 ## Цель
+
 Показать варианты использования `ViewSet`, `GenericViewSet`, `APIView` и как корректно настраивать маршрутизацию через routers.
 
 ## Типы View
@@ -18,14 +19,14 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path, include
 from .views import (
-    BookViewSet, CategoryViewSet, AuthorViewSet, 
+    BookViewSet, CategoryViewSet, AuthorViewSet,
     PublisherViewSet, CartItemViewSet
 )
 
 # Создаем роутер для API BookStore
 router = DefaultRouter()
 router.register(r'books', BookViewSet, basename='book')
-router.register(r'categories', CategoryViewSet, basename='category') 
+router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'authors', AuthorViewSet, basename='author')
 router.register(r'publishers', PublisherViewSet, basename='publisher')
 router.register(r'cart', CartItemViewSet, basename='cartitem')
@@ -50,7 +51,7 @@ from django.db.models import Avg
 
 class BookViewSet(viewsets.ModelViewSet):
     # ... основная конфигурация ViewSet
-    
+
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def set_featured(self, request, pk=None):
         """Сделать книгу рекомендуемой"""
@@ -58,38 +59,38 @@ class BookViewSet(viewsets.ModelViewSet):
         book.is_featured = True
         book.save()
         return Response({'status': 'Книга добавлена в рекомендуемые'})
-    
+
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def add_to_cart(self, request, pk=None):
         """Добавить книгу в корзину"""
         book = self.get_object()
         quantity = request.data.get('quantity', 1)
-        
+
         cart_item, created = CartItem.objects.get_or_create(
             user=request.user,
             book=book,
             defaults={'quantity': quantity}
         )
-        
+
         if not created:
             cart_item.quantity += quantity
             cart_item.save()
-            
+
         return Response({
             'status': 'Книга добавлена в корзину',
             'quantity': cart_item.quantity
         })
-    
+
     @action(detail=False, methods=['get'])
     def popular(self, request):
         """Получить популярные книги"""
         popular_books = self.get_queryset().filter(
             popularity__gte=50
         ).order_by('-popularity')[:10]
-        
+
         serializer = self.get_serializer(popular_books, many=True)
         return Response(serializer.data)
-    
+
     @action(detail=False, methods=['get'])
     def by_rating(self, request):
         """Книги с высоким рейтингом"""
@@ -97,10 +98,10 @@ class BookViewSet(viewsets.ModelViewSet):
             rating__gte=4.0,
             rating_count__gte=10
         ).order_by('-rating')[:20]
-        
+
         serializer = self.get_serializer(top_rated, many=True)
         return Response(serializer.data)
-    
+
     @action(detail=False, methods=['get'])
     def statistics(self, request):
         """Статистика по книгам"""
@@ -137,7 +138,8 @@ urlpatterns = router.urls + books_router.urls
 - Настройки в `REST_FRAMEWORK['DEFAULT_VERSIONING_CLASS']`
 
 ## Советы
+
 - Не перегружайте ViewSet сложной бизнес-логикой — выносите в сервисы/сущности.
 - Пишите тесты для кастомных actions.
 
-*Конец 08_VIEWSETS_URLS.md*
+_Конец 08_VIEWSETS_URLS.md_

@@ -3,6 +3,7 @@
 > Сложность: 🔴 Сложная
 
 ## Цель
+
 Показать стандартный путь деплоя BookStore Django/DRF: Gunicorn, Nginx, контейнеризация, миграции и сбор статики.
 
 ## Рекомендованная архитектура для BookStore
@@ -149,7 +150,7 @@ CMD ["gunicorn", "--bind", "0.0.0.0:8000", "bookstore.wsgi:application"]
 
 ```yaml
 # docker-compose.prod.yml
-version: '3.8'
+version: "3.8"
 
 services:
   web:
@@ -178,7 +179,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    
+
   nginx:
     image: nginx:alpine
     ports:
@@ -222,4 +223,4 @@ python manage.py collectstatic --noinput
 - Настройте `SECURE_SSL_REDIRECT`, HSTS, Content Security Policy
 - Храните секреты в окружении (Vault, Secrets Manager)
 
-*Конец 13_DEPLOYMENT.md*
+_Конец 13_DEPLOYMENT.md_

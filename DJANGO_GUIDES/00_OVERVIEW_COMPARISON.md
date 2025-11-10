@@ -46,6 +46,7 @@ Frontend:
 ### 1. Структура проекта
 
 #### Node.js/Express
+
 ```
 bookstore/
 ├── server.js              # Точка входа
@@ -62,6 +63,7 @@ bookstore/
 ```
 
 #### Django
+
 ```
 bookstore_django/
 ├── manage.py             # Утилита управления Django
@@ -85,41 +87,47 @@ bookstore_django/
 ### 2. Определение моделей
 
 #### Node.js/Sequelize
+
 ```javascript
 // models/Book.js
 module.exports = (sequelize, DataTypes) => {
-  const Book = sequelize.define('Book', {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true
+  const Book = sequelize.define(
+    "Book",
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      title: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+      },
+      price: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
     },
-    title: {
-      type: DataTypes.STRING(255),
-      allowNull: false
-    },
-    price: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: false
+    {
+      tableName: "books",
+      timestamps: true,
+      underscored: true,
     }
-  }, {
-    tableName: 'books',
-    timestamps: true,
-    underscored: true
-  });
-  
+  );
+
   Book.associate = (models) => {
     Book.belongsTo(models.Category);
     Book.belongsToMany(models.Author, {
-      through: 'book_authors'
+      through: "book_authors",
     });
   };
-  
+
   return Book;
 };
 ```
 
 #### Python/Django
+
 ```python
 # books/models.py
 from django.db import models
@@ -131,16 +139,17 @@ class Book(models.Model):
     authors = models.ManyToManyField('Author', through='BookAuthor')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         db_table = 'books'
         ordering = ['-created_at']
-    
+
     def __str__(self):
         return self.title
 ```
 
 **Ключевые отличия:**
+
 - Django ORM более декларативный и "pythonic"
 - Поля определяются как атрибуты класса
 - Связи определяются прямо в модели (ForeignKey, ManyToManyField)
@@ -150,6 +159,7 @@ class Book(models.Model):
 ### 3. Миграции
 
 #### Node.js/Sequelize
+
 ```bash
 # Создание миграции
 npx sequelize-cli migration:generate --name create-books
@@ -162,6 +172,7 @@ npx sequelize-cli db:migrate:undo
 ```
 
 #### Python/Django
+
 ```bash
 # Создание миграций автоматически на основе моделей
 python manage.py makemigrations
@@ -177,6 +188,7 @@ python manage.py migrate books 0001
 ```
 
 **Ключевые отличия:**
+
 - Django автоматически генерирует миграции из моделей
 - Не нужно писать миграции вручную (обычно)
 - Django отслеживает изменения в моделях
@@ -184,30 +196,31 @@ python manage.py migrate books 0001
 ### 4. API Endpoints
 
 #### Node.js/Express
+
 ```javascript
 // src/routes/books.js
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const booksController = require('../controllers/books');
-const auth = require('../middleware/auth');
+const booksController = require("../controllers/books");
+const auth = require("../middleware/auth");
 
-router.get('/', booksController.getAllBooks);
-router.get('/:id', booksController.getBookById);
-router.post('/', auth, booksController.createBook);
-router.put('/:id', auth, booksController.updateBook);
-router.delete('/:id', auth, booksController.deleteBook);
+router.get("/", booksController.getAllBooks);
+router.get("/:id", booksController.getBookById);
+router.post("/", auth, booksController.createBook);
+router.put("/:id", auth, booksController.updateBook);
+router.delete("/:id", auth, booksController.deleteBook);
 
 module.exports = router;
 ```
 
 ```javascript
 // src/controllers/books.js
-const { Book, Author, Category } = require('../models');
+const { Book, Author, Category } = require("../models");
 
 exports.getAllBooks = async (req, res) => {
   try {
     const books = await Book.findAll({
-      include: [Author, Category]
+      include: [Author, Category],
     });
     res.json(books);
   } catch (error) {
@@ -217,6 +230,7 @@ exports.getAllBooks = async (req, res) => {
 ```
 
 #### Python/Django REST Framework
+
 ```python
 # books/urls.py
 from django.urls import path, include
@@ -241,7 +255,7 @@ class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.select_related('category').prefetch_related('authors')
     serializer_class = BookSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
         category = self.request.query_params.get('category')
@@ -258,13 +272,14 @@ from .models import Book, Author, Category
 class BookSerializer(serializers.ModelSerializer):
     authors = serializers.StringRelatedField(many=True)
     category = serializers.StringRelatedField()
-    
+
     class Meta:
         model = Book
         fields = '__all__'
 ```
 
 **Ключевые отличия:**
+
 - DRF использует ViewSets вместо отдельных функций
 - Автоматическое создание CRUD операций
 - Сериализаторы для валидации и преобразования данных
@@ -273,28 +288,30 @@ class BookSerializer(serializers.ModelSerializer):
 ### 5. Аутентификация
 
 #### Node.js/JWT
+
 ```javascript
 // src/middleware/auth.js
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 module.exports = (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-  
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+
   if (!token) {
-    return res.status(401).json({ error: 'Нет токена' });
+    return res.status(401).json({ error: "Нет токена" });
   }
-  
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Невалидный токен' });
+    res.status(401).json({ error: "Невалидный токен" });
   }
 };
 ```
 
 #### Python/Django Simple JWT
+
 ```python
 # settings.py
 from datetime import timedelta
@@ -326,6 +343,7 @@ urlpatterns = [
 ```
 
 **Ключевые отличия:**
+
 - Django Simple JWT предоставляет готовые views
 - Автоматическая интеграция с Django auth
 - Поддержка refresh tokens из коробки
@@ -333,6 +351,7 @@ urlpatterns = [
 ## 🎁 Преимущества Django
 
 ### 1. **Админ-панель из коробки**
+
 ```python
 # books/admin.py
 from django.contrib import admin
@@ -349,6 +368,7 @@ class BookAdmin(admin.ModelAdmin):
 После этого получаем полнофункциональную админ-панель на `/admin/`!
 
 ### 2. **ORM с богатыми возможностями**
+
 ```python
 # Сложные запросы очень читаемы
 books = Book.objects.filter(
@@ -359,24 +379,26 @@ books = Book.objects.filter(
 ```
 
 ### 3. **Встроенная валидация**
+
 ```python
 # Валидация на уровне модели
 class Book(models.Model):
     price = models.DecimalField(
-        max_digits=10, 
+        max_digits=10,
         decimal_places=2,
         validators=[MinValueValidator(0)]
     )
 ```
 
 ### 4. **Management Commands**
+
 ```python
 # books/management/commands/import_books.py
 from django.core.management.base import BaseCommand
 
 class Command(BaseCommand):
     help = 'Импорт книг из CSV'
-    
+
     def handle(self, *args, **options):
         # Ваш код импорта
         self.stdout.write(self.success('Успешно импортировано!'))
@@ -387,6 +409,7 @@ python manage.py import_books
 ```
 
 ### 5. **Встроенное тестирование**
+
 ```python
 from django.test import TestCase
 from .models import Book
@@ -394,7 +417,7 @@ from .models import Book
 class BookTestCase(TestCase):
     def setUp(self):
         Book.objects.create(title="Test Book", price=500)
-    
+
     def test_book_creation(self):
         book = Book.objects.get(title="Test Book")
         self.assertEqual(book.price, 500)
@@ -403,6 +426,7 @@ class BookTestCase(TestCase):
 ## 🚀 Что будем использовать
 
 ### Обязательные пакеты
+
 ```txt
 Django==5.0.1
 psycopg2-binary==2.9.9
@@ -413,6 +437,7 @@ python-dotenv==1.0.0
 ```
 
 ### Дополнительные пакеты
+
 ```txt
 django-filter==23.5         # Фильтрация
 drf-spectacular==0.27.0     # OpenAPI документация
@@ -424,6 +449,7 @@ redis==5.0.1               # Кэширование (опционально)
 ## 📝 План обучения
 
 ### Этап 1: Базовая настройка (День 1-2)
+
 - [x] Установка Python и Django
 - [ ] Создание виртуального окружения
 - [ ] Инициализация Django проекта
@@ -431,12 +457,14 @@ redis==5.0.1               # Кэширование (опционально)
 - [ ] Создание базовой структуры
 
 ### Этап 2: Модели и база данных (День 3-4)
+
 - [ ] Создание всех моделей (User, Book, Category, etc.)
 - [ ] Настройка связей между моделями
 - [ ] Создание и применение миграций
 - [ ] Заполнение тестовыми данными
 
 ### Этап 3: API с Django REST Framework (День 5-7)
+
 - [ ] Установка DRF
 - [ ] Создание сериализаторов
 - [ ] Создание ViewSets
@@ -444,23 +472,27 @@ redis==5.0.1               # Кэширование (опционально)
 - [ ] Тестирование API
 
 ### Этап 4: Аутентификация (День 8-9)
+
 - [ ] Настройка Django Simple JWT
 - [ ] Регистрация пользователей
 - [ ] Вход/выход
 - [ ] Защищенные endpoints
 
 ### Этап 5: Продвинутые функции (День 10-12)
+
 - [ ] Фильтрация и поиск
 - [ ] Пагинация
 - [ ] Корзина покупок
 - [ ] Админ-панель
 
 ### Этап 6: Frontend интеграция (День 13-14)
+
 - [ ] CORS настройка
 - [ ] Интеграция с существующим frontend
 - [ ] Или создание нового на Django Templates
 
 ### Этап 7: Тестирование и деплой (День 15)
+
 - [ ] Написание тестов
 - [ ] Настройка production settings
 - [ ] Деплой (Heroku/Railway/VPS)
@@ -488,28 +520,33 @@ redis==5.0.1               # Кэширование (опционально)
 ## 💡 Полезные ссылки
 
 ### Официальная документация
+
 - [Django Documentation](https://docs.djangoproject.com/)
 - [Django REST Framework](https://www.django-rest-framework.org/)
 - [Django Simple JWT](https://django-rest-framework-simplejwt.readthedocs.io/)
 
 ### Обучающие ресурсы
+
 - [Django для начинающих](https://docs.djangoproject.com/en/5.0/intro/)
 - [DRF Tutorial](https://www.django-rest-framework.org/tutorial/quickstart/)
 - [Real Python Django Tutorials](https://realpython.com/tutorials/django/)
 
 ### Русскоязычные ресурсы
+
 - [Django Book на русском](https://djangobook.com/ru/)
 - [Хабр: Статьи по Django](https://habr.com/ru/hub/django/)
 
 ## 🎓 Рекомендации
 
 ### Для начинающих
+
 1. **Начните с официального tutorial Django** - пройдите его полностью
 2. **Изучите Python basics** - если не знакомы с Python
 3. **Используйте виртуальное окружение** - всегда!
 4. **Читайте документацию** - она очень хорошая у Django
 
 ### Для знающих Node.js/Express
+
 1. **Не пытайтесь писать как в Node.js** - примите "Django way"
 2. **Используйте встроенные возможности** - не изобретайте велосипед
 3. **ORM сильнее чем кажется** - изучите его возможности
