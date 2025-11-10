@@ -474,16 +474,16 @@ redis==5.0.1               # Кэширование (опционально)
 3. **02_PROJECT_INITIALIZATION.md** - Создание Django проекта
 4. **03_DATABASE_MODELS.md** - Создание моделей БД
 5. **04_MIGRATIONS.md** - Работа с миграциями
-6. **05_ADMIN_PANEL.md** - Настройка админ-панели
-7. **06_DRF_SETUP.md** - Django REST Framework
-8. **07_SERIALIZERS.md** - Сериализаторы данных
-9. **08_VIEWSETS_URLS.md** - ViewSets и маршрутизация
-10. **09_AUTHENTICATION.md** - JWT аутентификация
-11. **10_FILTERING_PAGINATION.md** - Фильтрация и пагинация
-12. **11_CART_ORDERS.md** - Корзина и заказы
-13. **12_TESTING.md** - Тестирование
-14. **13_DEPLOYMENT.md** - Деплой на production
-15. **14_COMPARISON_SUMMARY.md** - Итоговое сравнение
+6. **[05_ADMIN_PANEL.md](05_ADMIN_PANEL.md)** - Настройка админ-панели
+7. **[06_DRF_SETUP.md](06_DRF_SETUP.md)** - Django REST Framework
+8. **[07_SERIALIZERS.md](07_SERIALIZERS.md)** - Сериализаторы данных
+9. **[08_VIEWSETS_URLS.md](08_VIEWSETS_URLS.md)** - ViewSets и маршрутизация
+10. **[09_AUTHENTICATION.md](09_AUTHENTICATION.md)** - JWT аутентификация
+11. **[10_FILTERING_PAGINATION.md](10_FILTERING_PAGINATION.md)** - Фильтрация и пагинация
+12. **[11_CART_ORDERS.md](11_CART_ORDERS.md)** - Корзина и заказы
+13. **[12_TESTING.md](12_TESTING.md)** - Тестирование
+14. **[13_DEPLOYMENT.md](13_DEPLOYMENT.md)** - Деплой на production
+15. **[14_COMPARISON_SUMMARY.md](14_COMPARISON_SUMMARY.md)** - Итоговое сравнение
 
 ## 💡 Полезные ссылки
 
